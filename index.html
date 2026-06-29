@@ -120,6 +120,7 @@ body{margin:0;}
           <div style="display:inline-flex;padding:3px;background:var(--sunken);border-radius:999px;border:1px solid var(--border);">
             <button onClick="{{ setCarouselView }}" style="{{ carBtnStyle }}">カルーセル</button>
             <button onClick="{{ setListView }}" style="{{ listBtnStyle }}">一覧表</button>
+            <button onClick="{{ setCalendarView }}" style="{{ calBtnStyle }}">カレンダー</button>
           </div>
           <sc-if value="{{ isCarousel }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;gap:6px;">
@@ -220,15 +221,35 @@ body{margin:0;}
                   <td style="padding:13px 12px;white-space:nowrap;"><span style="{{ ev.formatBadge }}">{{ ev.formatLabel }}</span></td>
                   <td style="padding:13px 12px;white-space:nowrap;font-size:12px;color:var(--text-muted);">{{ ev.target }}</td>
                   <td style="padding:13px 16px;white-space:nowrap;text-align:right;">
-                    <span style="display:inline-flex;gap:7px;">
+                    <span style="display:inline-flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
                       <a href="{{ ev.pdfHref }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-body);text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:11.5px;transition:all .18s;" style-hover="border-color:var(--brand);color:var(--brand);">チラシ</a>
                       <a href="{{ ev.applyUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:8px;border:1px solid transparent;background:var(--brand);color:#fff;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:11.5px;transition:all .18s;" style-hover="background:var(--brand-strong);">申込 ↗</a>
+                      <sc-if value="{{ ev.hasCalDate }}"><a href="{{ ev.gcalUrl }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-body);text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:11.5px;transition:all .18s;" style-hover="border-color:#4285f4;color:#4285f4;">📅 登録</a></sc-if>
                     </span>
                   </td>
                 </tr>
               </sc-for>
             </tbody>
           </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCalendar }}">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button onClick="{{ calPrev }}" aria-label="前月" style="width:36px;height:36px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-body);cursor:pointer;transition:all .18s;" style-hover="border-color:var(--brand);color:var(--brand);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              </button>
+              <span style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--text-strong);min-width:120px;text-align:center;">{{ calMonthLabel }}</span>
+              <button onClick="{{ calNext }}" aria-label="次月" style="width:36px;height:36px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-body);cursor:pointer;transition:all .18s;" style-hover="border-color:var(--brand);color:var(--brand);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+              </button>
+              <button onClick="{{ calToday }}" style="padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:12px;transition:all .18s;" style-hover="border-color:var(--brand);color:var(--brand);">今月</button>
+            </div>
+            <span style="font-size:12px;color:var(--text-faint);">※カレンダーは全件表示（タグ／アーカイブ絞り込みの対象外）</span>
+          </div>
+          {{ calendarEl }}
         </div>
       </sc-if>
     </div>
@@ -503,7 +524,7 @@ body{margin:0;}
 class Component extends DCLogic {
   constructor(props){
     super(props);
-    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0, showPast:false, evtTag:'all' };
+    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0, showPast:false, evtTag:'all', calMonth:null };
     this.trackRef = React.createRef();
     this._evtPaused = false;
 
@@ -750,6 +771,20 @@ class Component extends DCLogic {
       const dnum = daysTo(dref);
       const isPast = (dnum !== null && dnum < 0);
       const isSoon = dd!==null && dd>=0 && dd<=7;
+      const calDateStr = ev.date || ev.deadline || '';
+      const hasCalDate = !!calDateStr;
+      const gcalUrl = (function(){
+        if(!calDateStr) return '#';
+        const p=calDateStr.split('-');
+        if(p.length<3) return '#';
+        const y=+p[0],m=+p[1]-1,d=+p[2];
+        const dt=new Date(y,m,d);
+        const next=new Date(y,m,d+1);
+        const pad=(n)=>String(n).padStart(2,'0');
+        const fmt=(dd)=>dd.getFullYear()+''+pad(dd.getMonth()+1)+''+pad(dd.getDate());
+        const details=[ev.organizer||'',ev.target?('対象:'+ev.target):'',ev.applyUrl||''].filter(Boolean).join(' / ');
+        return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(ev.title||'セミナー')+'&dates='+fmt(dt)+'/'+fmt(next)+'&details='+encodeURIComponent(details);
+      })();
       return {
         id:ev.id, title:ev.title||'（無題）', accent,
         dateLabel:fmtDate(ev.date), deadlineLabel:fmtShort(ev.deadline),
@@ -761,7 +796,8 @@ class Component extends DCLogic {
         isPast, pastLabel:'終了',
         tags: ev.tags || [],
         applyUrl:ev.applyUrl||'#', pdfHref:ev.pdf||ev.applyUrl||'#',
-        onClick:openClick(ev), onDblClick:openDbl(ev)
+        onClick:openClick(ev), onDblClick:openDbl(ev),
+        hasCalDate, gcalUrl, calDateStr
       };
     });
     const pastCount = evtAll.filter(ev=>ev.isPast).length;
@@ -826,6 +862,64 @@ class Component extends DCLogic {
 
     const noResults = sectionsTop.length===0 && sectionsBottom.length===0 && !newsVisible && !statsVisible;
 
+    // ----- Calendar -----
+    const now = new Date();
+    const calBase = st.calMonth || {y: now.getFullYear(), m: now.getMonth()};
+    const calY = calBase.y;
+    const calM = calBase.m; // 0-indexed
+    const calMonthLabel = calY + '年' + (calM + 1) + '月';
+    const self4 = this;
+    const calPrev = function(){ const nb = {y:calY, m:calM-1}; if(nb.m<0){nb.m=11;nb.y=calY-1;} self4.setState({calMonth:nb}); };
+    const calNext = function(){ const nb = {y:calY, m:calM+1}; if(nb.m>11){nb.m=0;nb.y=calY+1;} self4.setState({calMonth:nb}); };
+    const calToday = function(){ const nd = new Date(); self4.setState({calMonth:{y:nd.getFullYear(),m:nd.getMonth()}}); };
+    const calendarEl = (function(){
+      const firstDay = new Date(calY, calM, 1).getDay(); // 0=Sun
+      const lastDate = new Date(calY, calM+1, 0).getDate();
+      const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+      const evtByDay = {};
+      evtRaw.forEach(function(ev){
+        const ds = ev.date || ev.deadline;
+        if(!ds) return;
+        const p = String(ds).split('-');
+        if(p.length<3) return;
+        const ey=+p[0], em=+p[1]-1, ed=+p[2];
+        if(ey===calY && em===calM){ evtByDay[ed] = evtByDay[ed]||[]; evtByDay[ed].push(ev); }
+      });
+      const CE = React.createElement;
+      const dayNames = ['日','月','火','水','木','金','土'];
+      const headerCells = dayNames.map(function(d,i){
+        return CE('div',{key:'h'+i,style:{textAlign:'center',fontFamily:'var(--font-display)',fontWeight:700,fontSize:'12px',color: i===0?'#e53e3e': i===6?'#3182ce':'var(--text-muted)',padding:'6px 0',borderBottom:'1px solid var(--border)'}},d);
+      });
+      const dayCells = [];
+      for(var bi=0;bi<firstDay;bi++){
+        dayCells.push(CE('div',{key:'e'+bi,style:{minHeight:'80px',background:'var(--sunken)',borderRadius:'6px',opacity:.4}}));
+      }
+      for(var d=1;d<=lastDate;d++){
+        const ds2 = calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        const isToday = ds2===todayStr;
+        const evs = evtByDay[d]||[];
+        const chips2 = evs.map(function(ev){
+          const href = ev.pdf||ev.applyUrl||'#';
+          return CE('div',{key:ev.id,onClick:function(e){ e.stopPropagation(); window.open(href,'_blank','noopener'); },style:{cursor:'pointer',marginTop:'2px',padding:'2px 5px',borderRadius:'4px',background:ev.accent||'var(--brand)',color:'#fff',fontSize:'10px',fontFamily:'var(--font-display)',fontWeight:700,lineHeight:'1.3',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'100%',boxSizing:'border-box'}},ev.title);
+        });
+        const dow = (firstDay+d-1)%7;
+        const numColor = isToday?'#fff': dow===0?'#e53e3e': dow===6?'#3182ce':'var(--text-strong)';
+        dayCells.push(CE('div',{key:'d'+d,style:{minHeight:'80px',borderRadius:'6px',border:'1px solid '+(isToday?'var(--brand)':'var(--border)'),background:isToday?'var(--brand-soft)':'var(--surface)',padding:'4px',boxSizing:'border-box',overflow:'hidden'}},
+          CE('div',{style:{fontFamily:'var(--font-display)',fontWeight:700,fontSize:'13px',color:numColor,lineHeight:'1',marginBottom:'2px',display:'flex',alignItems:'center',justifyContent:'center',width:'22px',height:'22px',borderRadius:'50%',background:isToday?'var(--brand)':'transparent'}},String(d)),
+          chips2
+        ));
+      }
+      const totalCells = dayCells.length + firstDay;
+      const trailCount = totalCells%7===0?0:7-(totalCells%7);
+      for(var ti=0;ti<trailCount;ti++){
+        dayCells.push(CE('div',{key:'t'+ti,style:{minHeight:'80px',background:'var(--sunken)',borderRadius:'6px',opacity:.4}}));
+      }
+      return CE('div',{style:{border:'1px solid var(--border)',borderRadius:'12px',overflow:'hidden',background:'var(--surface)',boxShadow:'var(--shadow-sm)'}},
+        CE('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'2px',padding:'8px',background:'var(--sunken)'}},headerCells),
+        CE('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'4px',padding:'8px'}},dayCells)
+      );
+    })();
+
     return {
       theme: st.theme,
       themeIsDark: st.theme==='dark',
@@ -835,10 +929,14 @@ class Component extends DCLogic {
       events, evtCount: events.length, evtDots, evtTagChips, hasTags,
       isCarousel: st.eventView==='carousel',
       isList: st.eventView==='list',
+      isCalendar: st.eventView==='calendar',
       setCarouselView: ()=>this.setState({eventView:'carousel'}),
       setListView: ()=>this.setState({eventView:'list'}),
+      setCalendarView: ()=>this.setState({eventView:'calendar'}),
       carBtnStyle: segStyle(st.eventView==='carousel'),
       listBtnStyle: segStyle(st.eventView==='list'),
+      calBtnStyle: segStyle(st.eventView==='calendar'),
+      calMonthLabel, calPrev, calNext, calToday, calendarEl,
       trackRef: this.trackRef,
       evtPrev: ()=>this.advanceEvt(-1,false),
       evtNext: ()=>this.advanceEvt(1,false),
