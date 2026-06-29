@@ -1,0 +1,33 @@
+name: PDF→seminars.json 自動更新
+
+on:
+  push:
+    paths:
+      - 'project/seminars/*.pdf'
+  workflow_dispatch:   # 手動実行ボタン
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run update script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 scripts/update_seminars.py
+
+      - name: Commit updated seminars.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add project/seminars/seminars.json scripts/.seminars_cache.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: seminars.json をPDFから自動更新"
+            git push
+          fi
