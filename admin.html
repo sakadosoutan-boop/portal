@@ -77,6 +77,15 @@ textarea{resize:vertical;min-height:54px;}
 .link-row .lr-top{display:flex;gap:8px;align-items:center;margin-bottom:7px;}
 .link-row .lr-top .fav{width:26px;height:26px;border-radius:6px;flex:none;border:1px solid #eee;background:#f3f5ea;}
 .swatch{width:20px;height:20px;border-radius:5px;display:inline-block;border:1px solid #ddd;flex:none;}
+/* drag handle / move buttons */
+.drag-handle{cursor:grab;color:#aaa;padding:0 4px;font-size:16px;flex:none;user-select:none;line-height:1;}
+.drag-handle:active{cursor:grabbing;}
+.move-btns{display:flex;flex-direction:column;gap:2px;flex:none;}
+.move-btn{background:#f1f5f9;border:1px solid #dde3ea;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:3px 5px;color:#444;font-family:inherit;}
+.move-btn:hover{background:#e2e8f0;}
+.move-btn:disabled{opacity:.35;cursor:default;}
+.item.drag-over{outline:2px dashed #189048;outline-offset:2px;}
+.section-block.drag-over{outline:2px dashed #189048;outline-offset:2px;}
 /* password gate */
 .gate{position:fixed;inset:0;background:linear-gradient(140deg,#0d4926,#189048);display:flex;align-items:center;justify-content:center;z-index:1000;}
 .gate-box{background:#fff;border-radius:16px;padding:34px 30px;width:min(380px,90vw);box-shadow:0 18px 50px rgba(0,0,0,.3);text-align:center;}
@@ -303,6 +312,14 @@ const FMT_CLASS={online:'badge-online',onsite:'badge-onsite',hybrid:'badge-hybri
 let siteConfig={adminPass:'3535',sections:[],statsTop:[],statsGroups:[],asahi:{}};
 let seminars=[];
 let semSha=null;
+
+// ── 並び替え汎用ヘルパ ────────────────────────────
+function moveItem(arr,from,to){ if(to<0||to>=arr.length) return; const [x]=arr.splice(from,1); arr.splice(to,0,x); }
+
+// ── セミナー DnD 状態 ──
+let dragSemIdx=null;
+// ── カテゴリ DnD 状態 ──
+let dragSecIdx=null;
 
 // ── UTF-8 base64 ──────────────────────────────────
 function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
@@ -565,10 +582,21 @@ async function reloadSeminars(){
 function renderSeminars(){
   const el=document.getElementById('semList');
   if(!seminars.length){ el.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;">セミナーがありません</div>'; return; }
-  el.innerHTML=seminars.map(s=>{
+  el.innerHTML=seminars.map((s,i)=>{
     const fc=FMT_CLASS[s.format]||'';
-    return `<div class="item" id="sem_${s.id}">
+    const last=seminars.length-1;
+    return `<div class="item" id="sem_${s.id}" draggable="true"
+        ondragstart="onSemDragStart(event,${i})"
+        ondragover="onSemDragOver(event)"
+        ondrop="onSemDrop(event,${i})"
+        ondragleave="onSemDragLeave(event)"
+        ondragend="onSemDragEnd(event)">
       <div class="item-head">
+        <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
+        <div class="move-btns">
+          <button class="move-btn" title="上へ" ${i===0?'disabled':''} onclick="event.stopPropagation();moveSeminar(${i},-1)">▲</button>
+          <button class="move-btn" title="下へ" ${i===last?'disabled':''} onclick="event.stopPropagation();moveSeminar(${i},1)">▼</button>
+        </div>
         ${s.pdf?`<img class="thumb" src="${esc(s.pdf)}" onerror="this.style.display='none'">`:'<div class="thumb"></div>'}
         <div class="item-info">
           <div class="item-title">${esc(s.title||'（無題）')}</div>
@@ -607,6 +635,14 @@ function renderSeminars(){
     </div>`;
   }).join('');
 }
+// ── セミナー並び替え ──
+function moveSeminar(i,dir){ moveItem(seminars,i,i+dir); renderSeminars(); markDirty(); }
+// ── セミナー DnD ──
+function onSemDragStart(e,i){ dragSemIdx=i; e.dataTransfer.effectAllowed='move'; e.currentTarget.style.opacity='0.5'; }
+function onSemDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; e.currentTarget.classList.add('drag-over'); }
+function onSemDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function onSemDrop(e,i){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(dragSemIdx===null||dragSemIdx===i) return; moveItem(seminars,dragSemIdx,i); dragSemIdx=null; renderSeminars(); markDirty(); }
+function onSemDragEnd(e){ e.currentTarget.style.opacity=''; e.currentTarget.classList.remove('drag-over'); dragSemIdx=null; }
 function toggleSemEdit(id){
   document.getElementById('semf_'+id).classList.toggle('open');
   document.getElementById('sem_'+id).classList.toggle('editing');
@@ -648,9 +684,24 @@ async function saveSeminars(){
 // ════════════ リンク集（sections） ════════════
 function renderSections(){
   const wrap=document.getElementById('sectionsWrap');
-  wrap.innerHTML=siteConfig.sections.map((sec,si)=>`
-    <div class="section-block">
-      <h3><span class="swatch" style="background:${esc(sec.accent||'#189048')}"></span> カテゴリ ${si+1}</h3>
+  const lastSi=siteConfig.sections.length-1;
+  wrap.innerHTML=siteConfig.sections.map((sec,si)=>{
+    const lastLi=(sec.links||[]).length-1;
+    return `
+    <div class="section-block" draggable="true"
+        ondragstart="onSecDragStart(event,${si})"
+        ondragover="onSecDragOver(event)"
+        ondrop="onSecDrop(event,${si})"
+        ondragleave="onSecDragLeave(event)"
+        ondragend="onSecDragEnd(event)">
+      <h3>
+        <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
+        <div class="move-btns" style="flex-direction:row;">
+          <button class="move-btn" title="上へ" ${si===0?'disabled':''} onclick="event.stopPropagation();moveSection(${si},-1)">▲</button>
+          <button class="move-btn" title="下へ" ${si===lastSi?'disabled':''} onclick="event.stopPropagation();moveSection(${si},1)">▼</button>
+        </div>
+        <span class="swatch" style="background:${esc(sec.accent||'#189048')}"></span> カテゴリ ${si+1}
+      </h3>
       <div class="row3">
         <div class="field"><label>表示名</label><input value="${esc(sec.label)}" onchange="updSec(${si},'label',this.value)"></div>
         <div class="field"><label>キー（半角英数）</label><input value="${esc(sec.key)}" onchange="updSec(${si},'key',this.value)"></div>
@@ -660,6 +711,10 @@ function renderSections(){
       <div style="margin:6px 0;">${(sec.links||[]).map((l,li)=>`
         <div class="link-row">
           <div class="lr-top">
+            <div class="move-btns">
+              <button class="move-btn" title="上へ" ${li===0?'disabled':''} onclick="event.stopPropagation();moveLink(${si},${li},-1)">▲</button>
+              <button class="move-btn" title="下へ" ${li===lastLi?'disabled':''} onclick="event.stopPropagation();moveLink(${si},${li},1)">▼</button>
+            </div>
             <img class="fav" src="https://www.google.com/s2/favicons?domain=${esc(l.url)}&sz=64" onerror="this.style.visibility='hidden'">
             <input style="flex:1;" placeholder="リンク名" value="${esc(l.title)}" onchange="updLink(${si},${li},'title',this.value)">
             <button class="btn btn-danger btn-sm" onclick="delLink(${si},${li})">削除</button>
@@ -671,8 +726,18 @@ function renderSections(){
         <button class="btn btn-ghost btn-sm" onclick="addLink(${si})">＋ リンクを追加</button>
         <button class="btn btn-danger btn-sm" onclick="delSection(${si})">🗑 このカテゴリを削除</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+// ── カテゴリ並び替え ──
+function moveSection(si,dir){ moveItem(siteConfig.sections,si,si+dir); renderSections(); markDirty(); }
+function moveLink(si,li,dir){ moveItem(siteConfig.sections[si].links,li,li+dir); renderSections(); markDirty(); }
+// ── カテゴリ DnD ──
+function onSecDragStart(e,si){ dragSecIdx=si; e.dataTransfer.effectAllowed='move'; e.currentTarget.style.opacity='0.5'; }
+function onSecDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; e.currentTarget.classList.add('drag-over'); }
+function onSecDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function onSecDrop(e,si){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(dragSecIdx===null||dragSecIdx===si) return; moveItem(siteConfig.sections,dragSecIdx,si); dragSecIdx=null; renderSections(); markDirty(); }
+function onSecDragEnd(e){ e.currentTarget.style.opacity=''; e.currentTarget.classList.remove('drag-over'); dragSecIdx=null; }
 function updSec(si,key,val){ siteConfig.sections[si][key]=val; }
 function updSecAccent(si,val){ siteConfig.sections[si].accent=val; siteConfig.sections[si].accentSoft=softColor(val); renderSections(); }
 function updLink(si,li,key,val){ siteConfig.sections[si].links[li][key]=val; if(key==='url') renderSections(); }
