@@ -1,12 +1,62 @@
-{
-  "id": "s6",
-  "title": "イベント名（タイトル）",
-  "date": "2026-10-15",
-  "deadline": "2026-10-05",
-  "organizer": "主催・団体名",
-  "target": "高校1〜3年",
-  "format": "online",
-  "applyUrl": "https://…申込ページのURL",
-  "pdf": "seminars/my-event.pdf",
-  "accent": "#189048"
-}
+[
+  {
+    "id": "s1",
+    "title": "（自動取得中）SKM_651i26062910230",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": "高校生",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "seminars/SKM_651i26062910230.pdf",
+    "accent": "#189048"
+  },
+  {
+    "id": "s2",
+    "title": "（自動取得中）SKM_651i26062910231",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": "高校生",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "seminars/SKM_651i26062910231.pdf",
+    "accent": "#ee7e66"
+  },
+  {
+    "id": "s3",
+    "title": "（自動取得中）SKM_651i26062910232",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": "高校生",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "seminars/SKM_651i26062910232.pdf",
+    "accent": "#4fb8e8"
+  },
+  {
+    "id": "s4",
+    "title": "（自動取得中）SKM_651i26062910240",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": "高校生",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "seminars/SKM_651i26062910240.pdf",
+    "accent": "#f7b500"
+  },
+  {
+    "id": "s5",
+    "title": "（自動取得中）SKM_651i26062910250",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": "高校生",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "seminars/SKM_651i26062910250.pdf",
+    "accent": "#2e9bd6"
+  }
+]
