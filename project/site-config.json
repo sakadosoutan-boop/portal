@@ -1,8 +1,8 @@
 {
   "adminPass": "3535",
   "banner": {
-    "enabled": false,
-    "text": "",
+    "enabled": true,
+    "text": "夏のセミナー・講演会申し込み受付中！申し込んだらFormに入力を！",
     "link": "",
     "color": "#189048"
   },
