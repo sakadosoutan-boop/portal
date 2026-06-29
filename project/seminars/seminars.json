@@ -240,5 +240,18 @@
     "pdf": "project/seminars/up_1782776783298.pdf",
     "accent": "#a855f7",
     "tags": []
+  },
+  {
+    "id": "s18",
+    "title": "東松山市　夏のボランティア体験プログラム",
+    "date": null,
+    "deadline": "2026-07-05",
+    "organizer": "東松山市社会福祉協議会",
+    "target": null,
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "project/seminars/up_1782776951384.pdf",
+    "accent": "#f97316",
+    "tags": []
   }
 ]
