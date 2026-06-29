@@ -214,5 +214,18 @@
       "理系",
       "締切間近"
     ]
+  },
+  {
+    "id": "s16",
+    "title": "坂戸市学生ボランティア募集",
+    "date": null,
+    "deadline": null,
+    "organizer": "坂戸市中央地域交流センター",
+    "target": null,
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "project/seminars/up_1782776546168.pdf",
+    "accent": "#2e9bd6",
+    "tags": []
   }
 ]
