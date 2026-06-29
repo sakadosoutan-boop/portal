@@ -440,7 +440,7 @@ body{margin:0;}
 
   </main>
 
-  <sc-if value="{{ formsData.length > 0 }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ formsVisible }}" hint-placeholder-val="{{ false }}">
   <section id="forms" style="background:var(--surface-2);border-top:1px solid var(--border);padding:48px 24px;">
     <div style="max-width:1200px;margin:0 auto;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
@@ -468,6 +468,7 @@ body{margin:0;}
         <p style="margin:0;font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-strong);">まず、一次情報にあたろう。</p>
         <p style="margin:4px 0 0;font-size:12.5px;color:var(--text-muted);">総合的な探究の時間 — リサーチポータル。リンクは新しいタブで開きます。★でお気に入りを保存できます。</p>
       </div>
+      <a href="admin.html" style="flex:none;align-self:flex-end;font-size:12px;color:var(--text-faint);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;background:var(--surface);" title="先生・管理者用">⚙ 管理</a>
     </div>
   </footer>
 
@@ -477,7 +478,7 @@ body{margin:0;}
 class Component extends DCLogic {
   constructor(props){
     super(props);
-    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[] };
+    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0 };
     this.trackRef = React.createRef();
     this._evtPaused = false;
 
@@ -566,9 +567,26 @@ class Component extends DCLogic {
       const t = localStorage.getItem('tankyu-theme')||'light';
       this.setState({ favorites: Array.isArray(f)?f:[], theme: (t==='dark'?'dark':'light') });
     }catch(e){}
+    this.loadSiteConfig();
     this.loadSeminars();
     this.loadForms();
     this._evtTimer = setInterval(()=>{ if(!this._evtPaused && this.state.eventView==='carousel') this.advanceEvt(1, true); }, 4200);
+  }
+
+  loadSiteConfig(){
+    fetch('project/site-config.json').then(r=> r.ok ? r.json() : Promise.reject()).then(cfg=>{
+      if(!cfg || typeof cfg!=='object') return;
+      if(Array.isArray(cfg.sections) && cfg.sections.length) this.DATA.generic = cfg.sections;
+      if(Array.isArray(cfg.statsTop)) this.DATA.statsTop = cfg.statsTop;
+      if(Array.isArray(cfg.statsGroups)) this.DATA.statsGroups = cfg.statsGroups;
+      if(cfg.asahi && typeof cfg.asahi==='object') this.DATA.asahi = Object.assign({}, this.DATA.asahi, cfg.asahi);
+      // カテゴリチップをセクションに合わせて更新（新規セクションは末尾に追加）
+      this.DATA.generic.forEach(s=>{
+        const c = this.DATA.cats.find(x=>x.key===s.key);
+        if(c){ c.label = s.label; } else { this.DATA.cats.push({key:s.key,label:s.label}); }
+      });
+      this.setState({ cfgVersion: Date.now() });
+    }).catch(()=>{});
   }
 
   componentWillUnmount(){ clearInterval(this._evtTimer); clearTimeout(this._clickT); clearTimeout(this._ct); }
@@ -818,7 +836,8 @@ class Component extends DCLogic {
       tabs, activeGroupLinks, accGroups,
       activeGroupEmpty: activeGroupLinks.length===0
       ,
-      formsData: st.formsData
+      formsData: st.formsData,
+      formsVisible: !!(st.formsData && st.formsData.length)
     };
   }
 }

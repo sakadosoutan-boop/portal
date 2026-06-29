@@ -1,0 +1,123 @@
+{
+  "adminPass": "3535",
+  "sections": [
+    {
+      "key": "general",
+      "label": "総探全般",
+      "accent": "#189048",
+      "accentSoft": "#e8f6ee",
+      "desc": "探究の進め方や全体像をつかむための入口。",
+      "links": [
+        { "title": "「総合的な学習（探究）の時間」応援団のページ", "url": "https://www.mext.go.jp/a_menu/shotou/sougou/syokatsu.htm", "desc": "文部科学省。膨大な資料があるため、検索ワードの活用がおすすめ。" },
+        { "title": "総合的な探究の時間 | NHK高校講座", "url": "https://www.nhk.or.jp/kokokoza/tanq/", "desc": "映像で探究の基本を学べるNHKの高校講座。" },
+        { "title": "探究学習「情報の収集／整理・分析」リンク集【無料】", "url": "https://www.blog.studyvalley.jp/2021/08/26/link/", "desc": "Far East Tokyo。情報収集・整理分析に使えるリンクのまとめ。" }
+      ]
+    },
+    {
+      "key": "research",
+      "label": "先行研究",
+      "accent": "#2e9bd6",
+      "accentSoft": "#def0fb",
+      "desc": "論文検索サイト。一次情報・学術情報はここから。",
+      "links": [
+        { "title": "CiNii Research", "url": "https://cir.nii.ac.jp/", "desc": "日本最大級の論文・研究データの横断検索。" },
+        { "title": "J-STAGE", "url": "https://www.jstage.jst.go.jp/browse/-char/ja/", "desc": "国内の学術論文・学会誌を検索・閲覧できる。" },
+        { "title": "Google Scholar", "url": "https://scholar.google.co.jp/schhp?hl=ja", "desc": "多言語対応。海外の論文検索に。" },
+        { "title": "国立国会図書館サーチ（NDLサーチ）", "url": "https://ndlopac.ndl.go.jp/", "desc": "全国の図書館や研究機関の資料を統合検索できる。" },
+        { "title": "リサーチ・ナビ | 国立国会図書館", "url": "https://rnavi.ndl.go.jp/rnavi/", "desc": "「調べ方案内」の紹介。ウェブサイトのリンク集も便利。" },
+        { "title": "国立国会図書館デジタルコレクション", "url": "http://dl.ndl.go.jp/", "desc": "電子書籍・雑誌を検索・閲覧できる。" },
+        { "title": "IRDB 学術機関リポジトリデータベース", "url": "https://irdb.nii.ac.jp/", "desc": "全国の大学リポジトリ（紀要・論文）を横断検索。" }
+      ]
+    },
+    {
+      "key": "books",
+      "label": "図書",
+      "accent": "#b98900",
+      "accentSoft": "#fff3cc",
+      "desc": "本を探す・所蔵を調べる・古書を当たる。",
+      "links": [
+        { "title": "カーリル", "url": "https://calil.jp/", "desc": "全国の図書館の貸出状況をリアルタイムで簡単に検索。" },
+        { "title": "Webcat Plus", "url": "http://webcatplus.nii.ac.jp/", "desc": "日本で出版された本の検索や、連想検索ができる。" },
+        { "title": "想・IMAGINE", "url": "http://imagine.bookmap.info/index.jsp", "desc": "単語や文章から各データベースを連想検索。" },
+        { "title": "日本の古本屋", "url": "https://www.kosho.or.jp/", "desc": "古本・古書の検索・通販サイト。" },
+        { "title": "Google ブックス", "url": "https://books.google.co.jp/", "desc": "本文の一部を検索・試し読みできる。" },
+        { "title": "青空文庫", "url": "https://www.aozora.gr.jp/", "desc": "著作権切れ作品が読める電子図書館。" }
+      ]
+    },
+    {
+      "key": "themes",
+      "label": "テーマ例",
+      "accent": "#db5e45",
+      "accentSoft": "#fde8e2",
+      "desc": "高校生の探究テーマの実例から発想を得る。",
+      "links": [
+        { "title": "みんなの探究ライブラリ", "url": "https://www.benesse.co.jp/tankyu/event/library/index.html", "desc": "Benesse。探究テーマの実例集。" },
+        { "title": "高等部1年生 発表テーマ一覧（PDF）", "url": "https://www.junten.ed.jp/contents/wp-content/uploads/2022/03/b700dbb307a29fd6e8106d7ced03493d.pdf", "desc": "実際の発表テーマ一覧。発想のヒントに。" }
+      ]
+    },
+    {
+      "key": "design",
+      "label": "デザイン作成",
+      "accent": "#1e7db4",
+      "accentSoft": "#def0fb",
+      "desc": "発表資料を「伝わる」形に整える。",
+      "links": [
+        { "title": "伝わるデザイン", "url": "https://student.tsutawarudesign.com/", "desc": "発表スライド・資料づくりの基本が学べる。" },
+        { "title": "いらすとや", "url": "https://www.irasutoya.com/", "desc": "発表資料に使えるフリーイラスト素材。" },
+        { "title": "Adobe Color", "url": "https://color.adobe.com/ja/create", "desc": "配色（カラーパレット）を作れるツール。" }
+      ]
+    }
+  ],
+  "asahi": {
+    "title": "朝日けんさくくん",
+    "url": "https://kensaku.asahi.com/",
+    "id": "dks669ken",
+    "pw": "34a82vbsmy",
+    "desc": "朝日新聞の過去記事を検索できるデータベース。"
+  },
+  "statsTop": [
+    { "title": "e-Stat 政府統計の総合窓口", "url": "https://www.e-stat.go.jp/", "desc": "日本の政府統計データの総合窓口。" },
+    { "title": "RESAS 地域経済分析システム", "url": "https://resas.go.jp/#/13/13101", "desc": "地域経済を可視化して分析できるシステム。" },
+    { "title": "統計ダッシュボード", "url": "https://dashboard.e-stat.go.jp/", "desc": "主要な統計をグラフで見られる。e-Statの可視化版。" }
+  ],
+  "statsGroups": [
+    {
+      "key": "env",
+      "label": "① 環境問題系",
+      "links": [
+        { "title": "SDGs17の目標別動画クリップ | NHK for School", "url": "https://www.nhk.or.jp/school/17goals/", "desc": "目標別の短い動画クリップ。" },
+        { "title": "SDGsを学べる教材 | JICA", "url": "https://www.jica.go.jp/cooperation/learn/material/sdgs.html", "desc": "JICAのSDGs学習教材。" },
+        { "title": "NHK地域づくりアーカイブス", "url": "https://www.nhk.or.jp/chiiki/", "desc": "地域の取り組み。SDGs関連もあり。" },
+        { "title": "気象庁 過去の気象データ検索", "url": "https://www.data.jma.go.jp/obd/stats/etrn/", "desc": "気温・降水量などの実測データを取得できる。" }
+      ]
+    },
+    {
+      "key": "region",
+      "label": "② 地域系",
+      "links": [
+        { "title": "NHK地域づくりアーカイブス", "url": "https://www.nhk.or.jp/chiiki/", "desc": "全国の地域づくりの事例アーカイブ。" },
+        { "title": "jSTAT MAP（地図で見る統計）", "url": "https://jstatmap.e-stat.go.jp/", "desc": "統計データを地図上で可視化できる。" }
+      ]
+    },
+    {
+      "key": "humanities",
+      "label": "③ 文系",
+      "links": [
+        { "title": "NHKラーニング", "url": "https://www.nhk.or.jp/learning/", "desc": "幅広い分野の学習コンテンツ。" },
+        { "title": "現代日本語書き言葉均衡コーパス（BCCWJ）", "url": "https://clrd.ninjal.ac.jp/bccwj/", "desc": "少納言（登録不要）・中納言（登録必要）で日本語の使われ方を検索。" },
+        { "title": "怪異・妖怪伝承データベース | 日文研", "url": "https://www.nichibun.ac.jp/YoukaiDB/", "desc": "国際日本文化研究センターのデータベース。" },
+        { "title": "雑誌『国語学』全文データベース", "url": "https://bibdb.ninjal.ac.jp/SJL/", "desc": "国語学系の論文検索DB。" },
+        { "title": "e-Gov", "url": "https://www.e-gov.go.jp/", "desc": "政府文書や言葉・国際機関での定義を確認できる。" }
+      ]
+    },
+    {
+      "key": "science",
+      "label": "④ 理系",
+      "links": [
+        { "title": "理科自由研究データベース", "url": "http://sec-db.cf.ocha.ac.jp/", "desc": "お茶の水女子大。自由研究の事例DB。" },
+        { "title": "日本学生科学賞", "url": "https://event.yomiuri.co.jp/jssa/", "desc": "読売新聞主催の科学コンクール。" },
+        { "title": "JSEC（高校生・高専生科学技術チャレンジ）", "url": "https://manabu.asahi.com/jsec/", "desc": "朝日新聞主催の科学技術コンテスト。" }
+      ]
+    }
+  ]
+}
