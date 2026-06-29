@@ -1,0 +1,62 @@
+[
+  {
+    "id": "s1",
+    "title": "高校生探究フォーラム2026 ～問いから始まる学び～",
+    "date": "2026-07-26",
+    "deadline": "2026-07-18",
+    "organizer": "全国高校探究教育ネットワーク",
+    "target": "高校1〜3年",
+    "format": "online",
+    "applyUrl": "https://example.org/tankyu-forum-2026",
+    "pdf": "seminars/sample-tankyu-forum.pdf",
+    "accent": "#189048"
+  },
+  {
+    "id": "s2",
+    "title": "SDGs課題研究ワークショップ（夏期集中）",
+    "date": "2026-08-03",
+    "deadline": "2026-07-25",
+    "organizer": "地域未来研究センター",
+    "target": "高校2〜3年",
+    "format": "onsite",
+    "applyUrl": "https://example.org/sdgs-workshop",
+    "pdf": "seminars/sample-sdgs-workshop.pdf",
+    "accent": "#ee7e66"
+  },
+  {
+    "id": "s3",
+    "title": "データサイエンス入門セミナー｜統計で社会を読む",
+    "date": "2026-08-20",
+    "deadline": "2026-08-10",
+    "organizer": "大学連携データサイエンス教育機構",
+    "target": "高校全学年",
+    "format": "hybrid",
+    "applyUrl": "https://example.org/ds-seminar",
+    "pdf": "seminars/sample-datascience.pdf",
+    "accent": "#4fb8e8"
+  },
+  {
+    "id": "s4",
+    "title": "地域フィールドワーク成果発表会",
+    "date": "2026-09-07",
+    "deadline": "2026-08-28",
+    "organizer": "ふるさと探究プロジェクト実行委員会",
+    "target": "高校1〜3年",
+    "format": "onsite",
+    "applyUrl": "https://example.org/fieldwork-presentation",
+    "pdf": "seminars/sample-fieldwork.pdf",
+    "accent": "#f7b500"
+  },
+  {
+    "id": "s5",
+    "title": "論文の書き方・引用のルール 基礎講座",
+    "date": "2026-09-21",
+    "deadline": "2026-09-12",
+    "organizer": "学術リテラシー支援室",
+    "target": "高校2〜3年",
+    "format": "online",
+    "applyUrl": "https://example.org/academic-writing",
+    "pdf": "seminars/sample-writing.pdf",
+    "accent": "#2e9bd6"
+  }
+]
