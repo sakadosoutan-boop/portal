@@ -145,6 +145,7 @@ textarea{resize:vertical;min-height:54px;}
             <div class="field"><label>申込URL</label><input id="ns_applyUrl" placeholder="https://..."></div>
           </div>
           <div class="field"><label>チラシ画像/PDFのパス</label><input id="ns_pdf" placeholder="project/seminars/flyer.pdf"></div>
+          <div class="field"><label>タグ（カンマ区切り）</label><input id="ns_tags" placeholder="例: 理系, オンライン, 探究"></div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-primary btn-sm" onclick="addSeminar()">追加</button>
             <button class="btn btn-ghost btn-sm" onclick="toggleAddSem()">キャンセル</button>
@@ -457,6 +458,7 @@ function renderSeminars(){
           <div class="field"><label>申込URL</label><input value="${esc(s.applyUrl)}" onchange="updSem('${s.id}','applyUrl',this.value)"></div>
         </div>
         <div class="field"><label>チラシ画像/PDFのパス</label><input value="${esc(s.pdf)}" onchange="updSem('${s.id}','pdf',this.value)"></div>
+        <div class="field"><label>タグ（カンマ区切り）</label><input value="${esc((s.tags||[]).join(', '))}" onchange="updSem('${s.id}','tags',this.value.split(',').map(x=>x.trim()).filter(Boolean))"></div>
         <button class="btn btn-danger btn-sm" onclick="delSeminar('${s.id}')">🗑 このセミナーを削除</button>
       </div>
     </div>`;
@@ -482,9 +484,10 @@ function addSeminar(){
     target:document.getElementById('ns_target').value||null,
     format:document.getElementById('ns_format').value,
     applyUrl:document.getElementById('ns_applyUrl').value||'',
-    pdf:document.getElementById('ns_pdf').value||'',accent
+    pdf:document.getElementById('ns_pdf').value||'',accent,
+    tags:document.getElementById('ns_tags').value.split(',').map(x=>x.trim()).filter(Boolean)
   });
-  ['title','organizer','date','deadline','target','applyUrl','pdf'].forEach(f=>{const el=document.getElementById('ns_'+f);if(el)el.value='';});
+  ['title','organizer','date','deadline','target','applyUrl','pdf','tags'].forEach(f=>{const el=document.getElementById('ns_'+f);if(el)el.value='';});
   renderSeminars(); toggleAddSem(); markDirty();
   showToast('追加しました。「セミナーを保存」で確定してください。');
 }
