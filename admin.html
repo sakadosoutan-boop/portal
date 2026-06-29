@@ -124,6 +124,7 @@ textarea{resize:vertical;min-height:54px;}
     <div class="tab" data-tab="news" onclick="showTab('news')">📰 新聞・アカウント</div>
     <div class="tab" data-tab="forms" onclick="showTab('forms')">📝 Googleフォーム</div>
     <div class="tab" data-tab="banner" onclick="showTab('banner')">📢 お知らせ</div>
+    <div class="tab" data-tab="linkcheck" onclick="showTab('linkcheck')">🔍 リンク点検</div>
     <div class="tab" data-tab="settings" onclick="showTab('settings')">⚙️ 設定</div>
   </div>
 
@@ -264,6 +265,21 @@ textarea{resize:vertical;min-height:54px;}
       <div style="margin-top:12px;text-align:right;">
         <button class="btn btn-primary" onclick="saveSite('お知らせ')">💾 お知らせを保存</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ リンク点検 ============ -->
+  <div class="tabpane" id="pane-linkcheck">
+    <div class="card">
+      <h2>🔍 リンク点検</h2>
+      <p style="font-size:12.5px;color:#666;margin-bottom:12px;">登録されている全URLに対して、簡易的に応答の有無を確認します。</p>
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:12px 15px;margin-bottom:14px;">
+        <p style="font-size:12.5px;color:#856404;margin:0;line-height:1.6;"><strong>⚠️ 注意:</strong> ブラウザの制約上、正確な状態は取得できません。『応答なし』はネットワークやサイト側の設定が原因の場合もあります。実際にクリックして確認してください。</p>
+      </div>
+      <div style="margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="runLinkCheck()">🔍 点検する</button>
+      </div>
+      <div id="linkCheckResult"></div>
     </div>
   </div>
 
@@ -554,7 +570,7 @@ function updateFab(){
   const fab=document.getElementById('fabSave');
   const active=document.querySelector('.tab.active');
   const key=active?active.dataset.tab:'';
-  if(!key || key==='settings' || document.getElementById('app').style.display==='none'){
+  if(!key || !TAB_SAVE_LABEL[key] || document.getElementById('app').style.display==='none'){
     fab.style.display='none'; return;
   }
   fab.style.display='inline-flex';
@@ -905,6 +921,151 @@ function renderBanner(){
 
 // 未保存のまま離脱しようとしたら確認
 window.addEventListener('beforeunload',(e)=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+
+// ════════════ リンク点検 ════════════
+function collectAllUrls(){
+  const urls=[];
+  const urlSet=new Map(); // url -> {url, where}
+
+  // リンク集: sections[].links[].url
+  if(siteConfig.sections && Array.isArray(siteConfig.sections)){
+    siteConfig.sections.forEach(sec=>{
+      if(sec.links && Array.isArray(sec.links)){
+        sec.links.forEach(link=>{
+          if(link.url && link.url.trim()){
+            const url=link.url.trim();
+            if(!urlSet.has(url)){
+              urlSet.set(url,{url,where:`リンク集 / ${esc(sec.label)}`});
+            }
+          }
+        });
+      }
+    });
+  }
+
+  // 統計（おすすめ）: statsTop[].url
+  if(siteConfig.statsTop && Array.isArray(siteConfig.statsTop)){
+    siteConfig.statsTop.forEach(item=>{
+      if(item.url && item.url.trim()){
+        const url=item.url.trim();
+        if(!urlSet.has(url)){
+          urlSet.set(url,{url,where:'統計（おすすめ）'});
+        }
+      }
+    });
+  }
+
+  // 統計（グループ）: statsGroups[].links[].url
+  if(siteConfig.statsGroups && Array.isArray(siteConfig.statsGroups)){
+    siteConfig.statsGroups.forEach(group=>{
+      if(group.links && Array.isArray(group.links)){
+        group.links.forEach(link=>{
+          if(link.url && link.url.trim()){
+            const url=link.url.trim();
+            if(!urlSet.has(url)){
+              urlSet.set(url,{url,where:`統計 / ${esc(group.label)}`});
+            }
+          }
+        });
+      }
+    });
+  }
+
+  // 新聞アカウント: asahi.url
+  if(siteConfig.asahi && siteConfig.asahi.url && siteConfig.asahi.url.trim()){
+    const url=siteConfig.asahi.url.trim();
+    if(!urlSet.has(url)){
+      urlSet.set(url,{url,where:'新聞アカウント'});
+    }
+  }
+
+  // セミナー: seminars[].applyUrl（空でないもの）
+  if(seminars && Array.isArray(seminars)){
+    seminars.forEach(sem=>{
+      if(sem.applyUrl && sem.applyUrl.trim()){
+        const url=sem.applyUrl.trim();
+        if(!urlSet.has(url)){
+          urlSet.set(url,{url,where:`セミナー: ${esc(sem.title)}`});
+        }
+      }
+    });
+  }
+
+  return Array.from(urlSet.values());
+}
+
+async function checkUrl(u){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),8000);
+  try{
+    await fetch(u,{mode:'no-cors',signal:ctrl.signal});
+    clearTimeout(t);
+    return true;
+  }catch(e){
+    clearTimeout(t);
+    return false;
+  }
+}
+
+async function runLinkCheck(){
+  const btn=event.target;
+  const origText=btn.textContent;
+  btn.textContent='点検中…';
+  btn.disabled=true;
+
+  const urls=collectAllUrls();
+  const resultDiv=document.getElementById('linkCheckResult');
+  resultDiv.innerHTML='';
+
+  if(urls.length===0){
+    resultDiv.innerHTML='<div style="text-align:center;color:#aaa;padding:20px;">登録されているURLがありません</div>';
+    btn.textContent=origText;
+    btn.disabled=false;
+    return;
+  }
+
+  const results=[];
+  const MAX_CONCURRENT=6;
+
+  // 6件ずつバッチで実行
+  for(let i=0;i<urls.length;i+=MAX_CONCURRENT){
+    const batch=urls.slice(i,i+MAX_CONCURRENT);
+    const batchResults=await Promise.all(batch.map(item=>checkUrl(item.url).then(ok=>({...item,ok}))));
+    results.push(...batchResults);
+
+    // 逐次描画
+    renderCheckResults(results);
+  }
+
+  // 完了サマリ
+  const okCount=results.filter(r=>r.ok).length;
+  const ngCount=results.length-okCount;
+  const summary=document.createElement('div');
+  summary.style.cssText='padding:14px;background:#f0fdf4;border-radius:10px;border:1px solid #86efac;margin-top:14px;font-weight:700;color:#166534;';
+  summary.textContent=`✅ 点検完了: ${results.length}件中 ${okCount}件 応答あり / ${ngCount}件 要確認`;
+  resultDiv.appendChild(summary);
+
+  btn.textContent=origText;
+  btn.disabled=false;
+}
+
+function renderCheckResults(results){
+  const resultDiv=document.getElementById('linkCheckResult');
+  resultDiv.innerHTML=results.map(r=>`
+    <div style="border:1px solid #e5e9f0;border-radius:9px;padding:11px;margin-bottom:8px;background:#fafbff;display:flex;align-items:center;gap:10px;">
+      <div style="flex:none;font-size:18px;min-width:24px;text-align:center;">
+        ${r.ok?'<span style="color:#16a34a;">✓</span>':'<span style="color:#f97316;">⚠</span>'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:#666;margin-bottom:4px;">${esc(r.where)}</div>
+        <a href="${esc(r.url)}" target="_blank" style="color:#189048;font-weight:700;text-decoration:none;word-break:break-all;font-size:13px;">${esc(r.url)}</a>
+        <div style="font-size:11px;color:#888;margin-top:3px;">
+          ${r.ok?'<span style="color:#16a34a;">応答あり</span>':'<span style="color:#f97316;">応答なし（要確認）</span>'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>
