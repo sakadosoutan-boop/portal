@@ -1,1 +1,12 @@
-[]
+{
+  "id": "s6",
+  "title": "イベント名（タイトル）",
+  "date": "2026-10-15",
+  "deadline": "2026-10-05",
+  "organizer": "主催・団体名",
+  "target": "高校1〜3年",
+  "format": "online",
+  "applyUrl": "https://…申込ページのURL",
+  "pdf": "seminars/my-event.pdf",
+  "accent": "#189048"
+}
