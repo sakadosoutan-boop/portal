@@ -172,12 +172,12 @@
   {
     "id": "s12",
     "title": "女子中高生のための理系体験イベント（ICT・化学・材料など）",
-    "date": null,
-    "deadline": null,
+    "date": "2026-08-05",
+    "deadline": "2026-07-09",
     "organizer": "電気通信大学 男女共同参画・ダイバーシティ戦略推進室",
     "target": "女子中高生",
     "format": "onsite",
-    "applyUrl": "",
+    "applyUrl": "https://forms.office.com/pages/responsepage.aspx?id=AP2dKzYByEWwZMpeQwnaV5qIAg8c339Ih7Jel_fTMT1UODBLR1RDSllYNDBJVkJEWjVBNTQxTkw3MC4u&origin=QRCode&route=shorturl",
     "pdf": "project/seminars/IMG_1564.JPG",
     "accent": "#ee7e66",
     "tags": [
