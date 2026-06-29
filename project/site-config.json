@@ -1,6 +1,11 @@
 {
   "adminPass": "3535",
-  "banner": {"enabled": false, "text": "", "link": "", "color": "#189048"},
+  "banner": {
+    "enabled": false,
+    "text": "",
+    "link": "",
+    "color": "#189048"
+  },
   "sections": [
     {
       "key": "general",
