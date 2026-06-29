@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ポータル管理ページ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f5f7fa;color:#1a1a2e;min-height:100vh;}
+header{background:#189048;color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
+header h1{font-size:18px;font-weight:700;}
+header a{color:#fff;opacity:.8;font-size:13px;text-decoration:none;}
+header a:hover{opacity:1;}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px;}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.card h2{font-size:15px;font-weight:700;color:#189048;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #e8f5ee;}
+.setup-box{background:#fffbea;border:1px solid #f7b500;border-radius:10px;padding:16px 20px;margin-bottom:24px;}
+.setup-box p{font-size:13px;line-height:1.7;color:#555;}
+.setup-box a{color:#189048;font-weight:700;}
+input,select,textarea{width:100%;padding:8px 11px;border:1px solid #dde3ea;border-radius:7px;font-size:13px;font-family:inherit;color:#1a1a2e;background:#fafbfc;transition:border .15s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#189048;background:#fff;}
+textarea{resize:vertical;min-height:60px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:4px;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:inherit;}
+.btn-primary{background:#189048;color:#fff;}
+.btn-primary:hover{background:#146d39;}
+.btn-danger{background:#fee2e2;color:#b91c1c;}
+.btn-danger:hover{background:#fecaca;}
+.btn-ghost{background:#f1f5f9;color:#555;}
+.btn-ghost:hover{background:#e2e8f0;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.seminar-list{display:flex;flex-direction:column;gap:10px;}
+.seminar-item{border:1px solid #e8f0fe;border-radius:10px;padding:14px 16px;background:#fafbff;display:flex;align-items:flex-start;gap:14px;}
+.seminar-item.editing{border-color:#189048;background:#f0fdf4;}
+.seminar-thumb{width:52px;height:52px;border-radius:7px;object-fit:cover;border:1px solid #eee;flex-shrink:0;background:#eee;}
+.seminar-info{flex:1;min-width:0;}
+.seminar-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+.seminar-meta{font-size:12px;color:#666;display:flex;flex-wrap:wrap;gap:8px;}
+.seminar-actions{display:flex;gap:6px;flex-shrink:0;}
+.edit-form{display:none;border-top:1px solid #e8f0fe;margin-top:12px;padding-top:14px;}
+.edit-form.open{display:block;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s;z-index:999;}
+.toast.show{opacity:1;}
+.token-input{display:flex;gap:8px;}
+.token-input input{flex:1;}
+.status{font-size:12px;color:#666;margin-top:6px;}
+.status.ok{color:#189048;}
+.status.err{color:#dc2626;}
+.add-form{display:none;}
+.add-form.open{display:block;}
+.accent-swatch{width:18px;height:18px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:4px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+.badge-online{background:#dbeafe;color:#1d4ed8;}
+.badge-onsite{background:#dcfce7;color:#166534;}
+.badge-hybrid{background:#fef9c3;color:#854d0e;}
+.drag-hint{font-size:11px;color:#aaa;text-align:center;padding:8px;border:2px dashed #e0e7ef;border-radius:8px;cursor:pointer;}
+.drag-hint:hover{border-color:#189048;color:#189048;}
+.form-embed-list{display:flex;flex-direction:column;gap:16px;}
+.form-embed-item{border:1px solid #e8f0fe;border-radius:10px;padding:14px 16px;}
+.form-embed-item label{font-size:13px;font-weight:700;color:#333;display:block;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏫 探究リサーチポータル 管理ページ</h1>
+  <a href="index.html">← サイトに戻る</a>
+</header>
+<div class="container">
+
+  <!-- GitHub設定 -->
+  <div class="card" id="githubCard">
+    <h2>⚙️ GitHub 接続設定</h2>
+    <div class="setup-box">
+      <p>このページからセミナーを編集すると、GitHubリポジトリのファイルが直接更新されます。<br>
+      変更を保存するには <a href="https://github.com/settings/tokens/new?scopes=repo&description=portal-admin" target="_blank">GitHubトークン（repoスコープ）</a> が必要です。<br>
+      トークンは <strong>このブラウザのみに保存</strong> されます（他の人には見えません）。</p>
+    </div>
+    <div class="token-input">
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      <button class="btn btn-primary" onclick="saveToken()">保存</button>
+      <button class="btn btn-ghost" onclick="clearToken()">クリア</button>
+    </div>
+    <div class="status" id="tokenStatus"></div>
+  </div>
+
+  <!-- セミナー管理 -->
+  <div class="card">
+    <h2>📋 セミナー一覧・編集</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span class="status" id="listStatus"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="loadSeminars()">🔄 再読み込み</button>
+        <button class="btn btn-primary btn-sm" onclick="toggleAddForm()">＋ 新規追加</button>
+      </div>
+    </div>
+
+    <!-- 新規追加フォーム -->
+    <div class="add-form card" id="addForm" style="background:#f0fdf4;border:1px solid #189048;margin-bottom:16px;">
+      <h2 style="color:#166534;">＋ 新しいセミナーを追加</h2>
+      <div class="row">
+        <div class="field"><label>タイトル *</label><input id="new_title" placeholder="セミナー名"></div>
+        <div class="field"><label>主催者</label><input id="new_organizer" placeholder="大学名・団体名"></div>
+      </div>
+      <div class="row3">
+        <div class="field"><label>開催日（YYYY-MM-DD）</label><input id="new_date" type="date"></div>
+        <div class="field"><label>申込締切</label><input id="new_deadline" type="date"></div>
+        <div class="field"><label>形式</label>
+          <select id="new_format">
+            <option value="onsite">対面</option>
+            <option value="online">オンライン</option>
+            <option value="hybrid">ハイブリッド</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>対象</label><input id="new_target" placeholder="高校生・高校全学年 など"></div>
+        <div class="field"><label>申込URL</label><input id="new_applyUrl" placeholder="https://..."></div>
+      </div>
+      <div class="field"><label>チラシ画像/PDFのパス（seminarsフォルダ内）</label>
+        <input id="new_pdf" placeholder="project/seminars/flyer.pdf">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="addSeminar()">追加して保存</button>
+        <button class="btn btn-ghost" onclick="toggleAddForm()">キャンセル</button>
+      </div>
+    </div>
+
+    <div class="seminar-list" id="seminarList">
+      <div style="text-align:center;color:#aaa;padding:32px;">読み込み中...</div>
+    </div>
+
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn btn-primary" id="saveBtn" onclick="saveAll()" style="display:none;">💾 すべての変更を保存</button>
+    </div>
+  </div>
+
+  <!-- Google Forms埋め込み管理 -->
+  <div class="card">
+    <h2>📝 Google Forms 埋め込み</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:16px;">Google FormsのURLを貼り付けると、サイトに埋め込みフォームとして表示されます。</p>
+    <div class="form-embed-list" id="formEmbedList">
+      <div class="form-embed-item">
+        <label>フォーム 1</label>
+        <div class="row">
+          <div class="field"><label>タイトル</label><input id="form1_title" placeholder="例: セミナー申込フォーム"></div>
+          <div class="field"><label>Google Forms URL</label><input id="form1_url" placeholder="https://forms.google.com/..."></div>
+        </div>
+      </div>
+      <div class="form-embed-item">
+        <label>フォーム 2</label>
+        <div class="row">
+          <div class="field"><label>タイトル</label><input id="form2_title" placeholder="例: アンケートフォーム"></div>
+          <div class="field"><label>Google Forms URL</label><input id="form2_url" placeholder="https://forms.google.com/..."></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveForms()">💾 フォームを保存・埋め込む</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const OWNER = 'sakadosoutan-boop';
+const REPO  = 'portal';
+const FILE  = 'project/seminars/seminars.json';
+const FORMS_FILE = 'project/forms-config.json';
+
+let seminars = [];
+let dirty = false;
+
+// ── Token ───────────────────────────────────────
+function getToken(){ return localStorage.getItem('gh_token') || ''; }
+function saveToken(){
+  const t = document.getElementById('tokenInput').value.trim();
+  if(!t){ showToast('トークンを入力してください','#dc2626'); return; }
+  localStorage.setItem('gh_token', t);
+  document.getElementById('tokenInput').value = '';
+  verifyToken();
+}
+function clearToken(){
+  localStorage.removeItem('gh_token');
+  document.getElementById('tokenStatus').textContent = 'トークンをクリアしました';
+  document.getElementById('tokenStatus').className = 'status';
+}
+async function verifyToken(){
+  const t = getToken();
+  const el = document.getElementById('tokenStatus');
+  if(!t){ el.textContent = 'トークン未設定'; el.className='status'; return; }
+  el.textContent = '確認中...'; el.className='status';
+  try{
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
+      headers: { Authorization: `token ${t}` }
+    });
+    if(r.ok){ el.textContent = '✅ 接続OK'; el.className='status ok'; }
+    else { el.textContent = '❌ トークンが無効またはアクセス権なし'; el.className='status err'; }
+  }catch(e){ el.textContent = '❌ 接続エラー'; el.className='status err'; }
+}
+
+// ── Load ─────────────────────────────────────────
+async function loadSeminars(){
+  const el = document.getElementById('listStatus');
+  el.textContent = '読み込み中...';
+  try{
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`,
+      { headers: { Authorization: `token ${getToken()}` } });
+    const d = await r.json();
+    window._sha = d.sha;
+    seminars = JSON.parse(atob(d.content.replace(/\n/g,'')));
+    el.textContent = `${seminars.length}件のセミナーを読み込みました`;
+    el.className = 'status ok';
+    renderList();
+  }catch(e){
+    el.textContent = '読み込みエラー: ' + e.message;
+    el.className = 'status err';
+  }
+}
+
+// ── Render ───────────────────────────────────────
+const FORMAT_LABEL = { online:'オンライン', onsite:'対面', hybrid:'ハイブリッド' };
+const FORMAT_CLASS = { online:'badge-online', onsite:'badge-onsite', hybrid:'badge-hybrid' };
+const ACCENTS = ['#189048','#ee7e66','#4fb8e8','#f7b500','#2e9bd6','#a855f7','#f97316','#06b6d4','#84cc16','#ec4899'];
+
+function renderList(){
+  const el = document.getElementById('seminarList');
+  if(!seminars.length){ el.innerHTML='<div style="text-align:center;color:#aaa;padding:32px;">セミナーなし</div>'; return; }
+  el.innerHTML = seminars.map((s,i)=>{
+    const thumbSrc = s.pdf ? s.pdf : '';
+    const fmtClass = FORMAT_CLASS[s.format] || '';
+    return `<div class="seminar-item" id="item_${s.id}">
+      ${thumbSrc ? `<img class="seminar-thumb" src="${thumbSrc}" onerror="this.style.display='none'">` : '<div class="seminar-thumb"></div>'}
+      <div class="seminar-info">
+        <div class="seminar-title">${esc(s.title||'（タイトルなし）')}</div>
+        <div class="seminar-meta">
+          <span>${s.date||'日程未定'}</span>
+          ${s.deadline?`<span>締切 ${s.deadline}</span>`:''}
+          <span>${esc(s.organizer||'')}</span>
+          <span class="badge ${fmtClass}">${FORMAT_LABEL[s.format]||s.format}</span>
+          ${s.applyUrl?`<span style="color:#189048;">申込URL ✓</span>`:''}
+        </div>
+        <div class="edit-form" id="form_${s.id}">
+          <div class="row"><div class="field"><label>タイトル</label><input value="${esc(s.title||'')}" onchange="upd('${s.id}','title',this.value)" oninput="markDirty()"></div>
+          <div class="field"><label>主催者</label><input value="${esc(s.organizer||'')}" onchange="upd('${s.id}','organizer',this.value)" oninput="markDirty()"></div></div>
+          <div class="row3">
+            <div class="field"><label>開催日</label><input type="date" value="${s.date||''}" onchange="upd('${s.id}','date',this.value||null)" oninput="markDirty()"></div>
+            <div class="field"><label>締切日</label><input type="date" value="${s.deadline||''}" onchange="upd('${s.id}','deadline',this.value||null)" oninput="markDirty()"></div>
+            <div class="field"><label>形式</label><select onchange="upd('${s.id}','format',this.value)" oninput="markDirty()">
+              ${['onsite','online','hybrid'].map(f=>`<option value="${f}" ${s.format===f?'selected':''}>${FORMAT_LABEL[f]}</option>`).join('')}
+            </select></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>対象</label><input value="${esc(s.target||'')}" onchange="upd('${s.id}','target',this.value)" oninput="markDirty()"></div>
+            <div class="field"><label>申込URL</label><input value="${esc(s.applyUrl||'')}" onchange="upd('${s.id}','applyUrl',this.value)" oninput="markDirty()"></div>
+          </div>
+          <div class="field"><label>チラシファイルのパス</label><input value="${esc(s.pdf||'')}" onchange="upd('${s.id}','pdf',this.value)" oninput="markDirty()"></div>
+          <div style="margin-top:8px;">
+            <button class="btn btn-danger btn-sm" onclick="deleteSeminar('${s.id}')">🗑 削除</button>
+          </div>
+        </div>
+      </div>
+      <div class="seminar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit('${s.id}')">✏️ 編集</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toggleEdit(id){
+  const form = document.getElementById(`form_${id}`);
+  const item = document.getElementById(`item_${id}`);
+  form.classList.toggle('open');
+  item.classList.toggle('editing');
+}
+function upd(id, key, val){
+  const s = seminars.find(x=>x.id===id);
+  if(s) s[key] = val;
+}
+function markDirty(){
+  dirty = true;
+  document.getElementById('saveBtn').style.display = '';
+}
+
+// ── Add ──────────────────────────────────────────
+function toggleAddForm(){
+  document.getElementById('addForm').classList.toggle('open');
+}
+function addSeminar(){
+  const title = document.getElementById('new_title').value.trim();
+  if(!title){ showToast('タイトルは必須です','#dc2626'); return; }
+  const used = new Set(seminars.map(s=>s.accent));
+  const accent = ACCENTS.find(c=>!used.has(c)) || ACCENTS[seminars.length%ACCENTS.length];
+  const maxNum = seminars.filter(s=>/^s\d+$/.test(s.id)).map(s=>parseInt(s.id.slice(1))).reduce((a,b)=>Math.max(a,b),0);
+  seminars.push({
+    id: `s${maxNum+1}`,
+    title,
+    date: document.getElementById('new_date').value || null,
+    deadline: document.getElementById('new_deadline').value || null,
+    organizer: document.getElementById('new_organizer').value || null,
+    target: document.getElementById('new_target').value || null,
+    format: document.getElementById('new_format').value,
+    applyUrl: document.getElementById('new_applyUrl').value || '',
+    pdf: document.getElementById('new_pdf').value || '',
+    accent
+  });
+  ['title','organizer','date','deadline','applyUrl','pdf'].forEach(f=>{ const el=document.getElementById('new_'+f); if(el) el.value=''; });
+  renderList();
+  markDirty();
+  toggleAddForm();
+  showToast('追加しました。「すべての変更を保存」で確定してください。');
+}
+
+// ── Delete ───────────────────────────────────────
+function deleteSeminar(id){
+  if(!confirm('このセミナーを削除しますか？')) return;
+  seminars = seminars.filter(s=>s.id!==id);
+  renderList();
+  markDirty();
+}
+
+// ── Save ─────────────────────────────────────────
+async function saveAll(){
+  const t = getToken();
+  if(!t){ showToast('GitHubトークンを設定してください','#dc2626'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '保存中...'; btn.disabled = true;
+  try{
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(seminars, null, 2)+'\n')));
+    const body = { message:'管理ページからseminars.jsonを更新', content, sha: window._sha };
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`,{
+      method:'PUT', headers:{ Authorization:`token ${t}`, 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error((await r.json()).message);
+    const d = await r.json();
+    window._sha = d.content.sha;
+    dirty = false;
+    btn.style.display = 'none';
+    btn.textContent = '💾 すべての変更を保存';
+    btn.disabled = false;
+    showToast('✅ 保存しました！サイトに反映されます（約1〜2分後）');
+  }catch(e){
+    showToast('❌ 保存エラー: '+e.message, '#dc2626');
+    btn.textContent = '💾 すべての変更を保存';
+    btn.disabled = false;
+  }
+}
+
+// ── Google Forms ─────────────────────────────────
+async function saveForms(){
+  const t = getToken();
+  if(!t){ showToast('GitHubトークンを設定してください','#dc2626'); return; }
+  const forms = [
+    { title: document.getElementById('form1_title').value, url: document.getElementById('form1_url').value },
+    { title: document.getElementById('form2_title').value, url: document.getElementById('form2_url').value },
+  ].filter(f=>f.url);
+  // Convert Google Forms URL to embed URL
+  forms.forEach(f=>{
+    if(f.url.includes('forms.google.com') || f.url.includes('forms.gle')){
+      f.url = f.url.replace('/viewform','').replace(/\?.*$/,'') + '/viewform?embedded=true';
+    }
+  });
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(forms, null, 2))));
+  // Check if file exists
+  let sha;
+  try{
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FORMS_FILE}`,
+      { headers:{ Authorization:`token ${t}` } });
+    if(r.ok){ sha = (await r.json()).sha; }
+  }catch(e){}
+  const body = { message:'管理ページからフォーム設定を更新', content };
+  if(sha) body.sha = sha;
+  const r2 = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FORMS_FILE}`,{
+    method:'PUT', headers:{ Authorization:`token ${t}`, 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  if(r2.ok){
+    showToast('✅ フォームを保存しました！index.htmlに埋め込まれます。');
+  } else {
+    showToast('❌ 保存エラー', '#dc2626');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────
+function showToast(msg, bg='#189048'){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.background = bg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3500);
+}
+
+// ── Init ──────────────────────────────────────────
+verifyToken();
+loadSeminars();
+
+// Load saved forms config
+(async()=>{
+  try{
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FORMS_FILE}`);
+    if(r.ok){
+      const d = await r.json();
+      const forms = JSON.parse(atob(d.content.replace(/\n/g,'')));
+      if(forms[0]){ document.getElementById('form1_title').value=forms[0].title||''; document.getElementById('form1_url').value=forms[0].url||''; }
+      if(forms[1]){ document.getElementById('form2_title').value=forms[1].title||''; document.getElementById('form2_url').value=forms[1].url||''; }
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
