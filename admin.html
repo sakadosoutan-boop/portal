@@ -145,6 +145,10 @@ textarea{resize:vertical;min-height:54px;}
             <div class="field"><label>申込URL</label><input id="ns_applyUrl" placeholder="https://..."></div>
           </div>
           <div class="field"><label>チラシ画像/PDFのパス</label><input id="ns_pdf" placeholder="project/seminars/flyer.pdf"></div>
+          <div class="field"><label>チラシファイルをアップロード（画像/PDF）</label>
+            <input type="file" id="ns_flyer" accept="image/*,application/pdf" style="width:auto;background:none;border:none;padding:2px 0;" onchange="handleFlyerNew(this)">
+            <div id="ns_flyer_preview" style="margin-top:6px;"></div>
+          </div>
           <div class="field"><label>タグ（カンマ区切り）</label><input id="ns_tags" placeholder="例: 理系, オンライン, 探究"></div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-primary btn-sm" onclick="addSeminar()">追加</button>
@@ -367,6 +371,141 @@ async function putFile(path,obj,message){
   }catch(e){ showToast('保存エラー: '+e.message,'#dc2626'); return false; }
 }
 
+// ── チラシ アップロード ────────────────────────────
+// 画像をcanvasで最大1600px幅にリサイズしてJPEG(0.85)に変換
+function resizeImageToJpeg(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const MAX=1600;
+      let w=img.width, h=img.height;
+      if(w>MAX){ h=Math.round(h*(MAX/w)); w=MAX; }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{ if(blob) resolve(blob); else reject(new Error('canvas toBlob失敗')); },'image/jpeg',0.85);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('画像読み込みエラー')); };
+    img.src=url;
+  });
+}
+
+// FileをバイナリBase64で読み取る（readAsDataURLのdata:...,BASE64 のBASE64部分を返す）
+function readFileAsBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{ resolve(reader.result.split(',')[1]); };
+    reader.onerror=()=>reject(new Error('ファイル読み込みエラー'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// uploadFlyer: Promise<path> を返す
+async function uploadFlyer(file){
+  const t=getToken();
+  if(!t){ showToast('アップロードにはGitHubトークンが必要です（設定タブ）','#dc2626'); showTab('settings'); return null; }
+
+  const isPdf=file.type==='application/pdf';
+  const isImage=file.type.startsWith('image/');
+
+  if(!isPdf && !isImage){ showToast('画像またはPDFファイルを選択してください','#dc2626'); return null; }
+  if(isPdf && file.size>10*1024*1024){ showToast('PDFファイルが大きすぎます（10MB以上）。圧縮してから再アップロードしてください','#dc2626'); return null; }
+
+  showToast('アップロード中…','#1a1a2e');
+
+  let base64, ext, contentType;
+  try{
+    if(isImage){
+      // 画像はcanvasでリサイズ→JPEG変換
+      const blob=await resizeImageToJpeg(file);
+      base64=await readFileAsBase64(blob);
+      ext='jpg';
+      contentType='image/jpeg';
+    } else {
+      // PDFはそのまま
+      base64=await readFileAsBase64(file);
+      ext='pdf';
+      contentType='application/pdf';
+    }
+  }catch(e){
+    showToast('❌ ファイル処理エラー: '+e.message,'#dc2626');
+    return null;
+  }
+
+  const filename='up_'+Date.now()+'.'+ext;
+  const path='project/seminars/'+filename;
+
+  try{
+    const body={message:'チラシファイルをアップロード: '+filename, content:base64};
+    // 新規ファイルなのでshaは不要
+    const r=await fetch(api(path),{
+      method:'PUT',
+      headers:Object.assign({'Content-Type':'application/json'},auth(t)),
+      body:JSON.stringify(body)
+    });
+    if(!r.ok){
+      const e=await r.json();
+      showToast('❌ アップロードエラー: '+(e.message||r.status),'#dc2626');
+      return null;
+    }
+    showToast('✅ アップロード完了: '+filename);
+    return path;
+  }catch(e){
+    showToast('❌ アップロードエラー: '+e.message,'#dc2626');
+    return null;
+  }
+}
+
+// 新規追加フォーム用
+async function handleFlyerNew(input){
+  const file=input.files[0]; if(!file) return;
+  const path=await uploadFlyer(file);
+  if(path){
+    document.getElementById('ns_pdf').value=path;
+    // プレビュー（画像のみ）
+    const prev=document.getElementById('ns_flyer_preview');
+    if(prev && file.type.startsWith('image/')){
+      const url=URL.createObjectURL(file);
+      prev.innerHTML='<img src="'+url+'" style="max-width:160px;max-height:100px;border-radius:6px;border:1px solid #dde3ea;object-fit:cover;" onload="URL.revokeObjectURL(this.src)">';
+    } else if(prev){
+      prev.innerHTML='<span style="font-size:12px;color:#189048;">📄 '+path.split('/').pop()+'</span>';
+    }
+  }
+  input.value=''; // reset so same file can be re-selected
+}
+
+// 編集フォーム用
+async function handleFlyerEdit(id,input){
+  const file=input.files[0]; if(!file) return;
+  const path=await uploadFlyer(file);
+  if(path){
+    updSem(id,'pdf',path);
+    const pdfInput=document.getElementById('ef_pdf_'+id);
+    if(pdfInput) pdfInput.value=path;
+    renderSeminars();
+    markDirty();
+    // 編集フォームを再度開く
+    const formEl=document.getElementById('semf_'+id);
+    if(formEl && !formEl.classList.contains('open')){
+      formEl.classList.add('open');
+      const semEl=document.getElementById('sem_'+id);
+      if(semEl) semEl.classList.add('editing');
+    }
+    // プレビュー（再描画後に要素を再取得）
+    const prev=document.getElementById('ef_preview_'+id);
+    if(prev && file.type.startsWith('image/')){
+      const url=URL.createObjectURL(file);
+      prev.innerHTML='<img src="'+url+'" style="max-width:160px;max-height:100px;border-radius:6px;border:1px solid #dde3ea;object-fit:cover;" onload="URL.revokeObjectURL(this.src)">';
+    } else if(prev){
+      prev.innerHTML='<span style="font-size:12px;color:#189048;">📄 '+path.split('/').pop()+'</span>';
+    }
+  }
+  input.value='';
+}
+
 // ── パスワードゲート ───────────────────────────────
 function tryUnlock(){
   const v=document.getElementById('gatePass').value;
@@ -457,7 +596,11 @@ function renderSeminars(){
           <div class="field"><label>対象</label><input value="${esc(s.target)}" onchange="updSem('${s.id}','target',this.value)"></div>
           <div class="field"><label>申込URL</label><input value="${esc(s.applyUrl)}" onchange="updSem('${s.id}','applyUrl',this.value)"></div>
         </div>
-        <div class="field"><label>チラシ画像/PDFのパス</label><input value="${esc(s.pdf)}" onchange="updSem('${s.id}','pdf',this.value)"></div>
+        <div class="field"><label>チラシ画像/PDFのパス</label><input id="ef_pdf_${s.id}" value="${esc(s.pdf)}" onchange="updSem('${s.id}','pdf',this.value)"></div>
+        <div class="field"><label>チラシファイルをアップロード（画像/PDF）</label>
+          <input type="file" accept="image/*,application/pdf" style="width:auto;background:none;border:none;padding:2px 0;" onchange="handleFlyerEdit('${s.id}',this)">
+          <div id="ef_preview_${s.id}" style="margin-top:6px;"></div>
+        </div>
         <div class="field"><label>タグ（カンマ区切り）</label><input value="${esc((s.tags||[]).join(', '))}" onchange="updSem('${s.id}','tags',this.value.split(',').map(x=>x.trim()).filter(Boolean))"></div>
         <button class="btn btn-danger btn-sm" onclick="delSeminar('${s.id}')">🗑 このセミナーを削除</button>
       </div>
