@@ -10,7 +10,10 @@
     "applyUrl": "https://forms.office.com/r/4XUTaJXFkq",
     "pdf": "project/seminars/SKM_651i26062910230.pdf",
     "accent": "#189048",
-    "tags": ["探究", "インターン"]
+    "tags": [
+      "探究",
+      "インターン"
+    ]
   },
   {
     "id": "s2",
@@ -23,7 +26,10 @@
     "applyUrl": "",
     "pdf": "project/seminars/SKM_651i26062910231.pdf",
     "accent": "#ee7e66",
-    "tags": ["文系", "探究"]
+    "tags": [
+      "文系",
+      "探究"
+    ]
   },
   {
     "id": "s3",
@@ -36,7 +42,9 @@
     "applyUrl": "https://ws.formzu.net/dist/S36758700/",
     "pdf": "project/seminars/SKM_651i26062910232.pdf",
     "accent": "#4fb8e8",
-    "tags": ["探究"]
+    "tags": [
+      "探究"
+    ]
   },
   {
     "id": "s4",
@@ -49,7 +57,10 @@
     "applyUrl": "",
     "pdf": "project/seminars/SKM_651i26062910240.pdf",
     "accent": "#f7b500",
-    "tags": ["オンライン", "理系"]
+    "tags": [
+      "オンライン",
+      "理系"
+    ]
   },
   {
     "id": "s5",
@@ -62,7 +73,9 @@
     "applyUrl": "https://www.miraikan.jst.go.jp/visit/group/",
     "pdf": "project/seminars/SKM_651i26062910250.pdf",
     "accent": "#2e9bd6",
-    "tags": ["理系"]
+    "tags": [
+      "理系"
+    ]
   },
   {
     "id": "s6",
@@ -75,20 +88,24 @@
     "applyUrl": "",
     "pdf": "project/seminars/IMG_1556.JPG",
     "accent": "#a855f7",
-    "tags": ["文系"]
+    "tags": [
+      "文系"
+    ]
   },
   {
     "id": "s7",
     "title": "第10回 ビブリオバトル・ワークショップ",
-    "date": null,
-    "deadline": null,
+    "date": "2026-08-01",
+    "deadline": "2026-07-17",
     "organizer": "聖学院",
     "target": "高校生",
     "format": "onsite",
-    "applyUrl": "",
+    "applyUrl": "https://www.seigakuin-univ.ac.jp/events/388/",
     "pdf": "project/seminars/IMG_1557.JPG",
     "accent": "#f97316",
-    "tags": ["文系"]
+    "tags": [
+      "文系"
+    ]
   },
   {
     "id": "s8",
@@ -101,7 +118,10 @@
     "applyUrl": "https://s.rikkyo.ac.jp/20260721",
     "pdf": "project/seminars/IMG_1560.JPG",
     "accent": "#06b6d4",
-    "tags": ["文系", "締切間近"]
+    "tags": [
+      "文系",
+      "締切間近"
+    ]
   },
   {
     "id": "s9",
@@ -114,7 +134,9 @@
     "applyUrl": "",
     "pdf": "project/seminars/IMG_1561.JPG",
     "accent": "#84cc16",
-    "tags": ["理系"]
+    "tags": [
+      "理系"
+    ]
   },
   {
     "id": "s10",
@@ -127,7 +149,10 @@
     "applyUrl": "",
     "pdf": "project/seminars/IMG_1562.JPG",
     "accent": "#ec4899",
-    "tags": ["理系", "締切間近"]
+    "tags": [
+      "理系",
+      "締切間近"
+    ]
   },
   {
     "id": "s11",
@@ -140,7 +165,9 @@
     "applyUrl": "https://www.kagakuseimei.lab.uec.ac.jp/",
     "pdf": "project/seminars/IMG_1563.JPG",
     "accent": "#189048",
-    "tags": ["理系"]
+    "tags": [
+      "理系"
+    ]
   },
   {
     "id": "s12",
@@ -153,7 +180,9 @@
     "applyUrl": "",
     "pdf": "project/seminars/IMG_1564.JPG",
     "accent": "#ee7e66",
-    "tags": ["理系"]
+    "tags": [
+      "理系"
+    ]
   },
   {
     "id": "s13",
@@ -166,7 +195,10 @@
     "applyUrl": "https://forms.gle/EBQFSSW7bAgbTUS",
     "pdf": "project/seminars/IMG_1565.JPG",
     "accent": "#4fb8e8",
-    "tags": ["理系", "探究"]
+    "tags": [
+      "理系",
+      "探究"
+    ]
   },
   {
     "id": "s14",
@@ -179,7 +211,9 @@
     "applyUrl": "https://www.toho-u.ac.jp/phar/event/20260730-01_pha.html",
     "pdf": "project/seminars/IMG_1566.JPG",
     "accent": "#f7b500",
-    "tags": ["理系"]
+    "tags": [
+      "理系"
+    ]
   },
   {
     "id": "s15",
@@ -192,6 +226,9 @@
     "applyUrl": "https://www.toho-u.ac.jp/sci/event/sci_class2026.html",
     "pdf": "project/seminars/IMG_1567.JPG",
     "accent": "#2e9bd6",
-    "tags": ["理系", "締切間近"]
+    "tags": [
+      "理系",
+      "締切間近"
+    ]
   }
 ]
