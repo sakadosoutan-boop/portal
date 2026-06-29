@@ -101,6 +101,12 @@ body{margin:0;}
     </div>
   </sc-if>
 
+  <sc-if value="{{ notifyVisible }}">
+    <div style="background:var(--brand-soft);border-bottom:1px solid var(--border);padding:10px 24px;text-align:center;">
+      <a href="{{ notifyUrl }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:999px;background:var(--brand);color:#fff;font-family:var(--font-display);font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:opacity .18s;" onmouseenter="this.style.opacity='.85'" onmouseleave="this.style.opacity='1'">{{ notifyLabel }}</a>
+    </div>
+  </sc-if>
+
   <section style="background:var(--surface-2);border-bottom:1px solid var(--border);">
     <div style="max-width:1200px;margin:0 auto;padding:22px 24px 26px;">
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
@@ -628,6 +634,32 @@ class Component extends DCLogic {
       if(Array.isArray(cfg.statsGroups)) this.DATA.statsGroups = cfg.statsGroups;
       if(cfg.asahi && typeof cfg.asahi==='object') this.DATA.asahi = Object.assign({}, this.DATA.asahi, cfg.asahi);
       if(cfg.banner) this.DATA.banner = cfg.banner;
+      this.DATA.analytics = cfg.analytics || {};
+      this.DATA.notify = cfg.notify || {};
+      // GoatCounter動的注入（コード設定時のみ・二重注入防止）
+      const gcCode = (this.DATA.analytics && this.DATA.analytics.goatcounter) || '';
+      if(gcCode && !window.__gcInjected){
+        window.__gcInjected = true;
+        const s = document.createElement('script');
+        s.async = true;
+        s.setAttribute('data-goatcounter','https://'+gcCode+'.goatcounter.com/count');
+        s.src = '//gc.zgo.at/count.js';
+        document.head.appendChild(s);
+        // 外部リンク計測（delegated・一度だけ登録）
+        if(!window.__gcOutboundBound){
+          window.__gcOutboundBound = true;
+          document.addEventListener('click', function(ev){
+            var el = ev.target;
+            while(el && el.tagName !== 'A') el = el.parentElement;
+            if(!el || el.target !== '_blank') return;
+            var href = el.href || '';
+            var title = (el.textContent || '').trim() || href;
+            if(window.goatcounter && typeof window.goatcounter.count === 'function'){
+              window.goatcounter.count({path:'outbound: '+href, title:title, event:true});
+            }
+          });
+        }
+      }
       // カテゴリチップをセクションに合わせて更新（新規セクションは末尾に追加）
       this.DATA.generic.forEach(s=>{
         const c = this.DATA.cats.find(x=>x.key===s.key);
@@ -989,7 +1021,11 @@ class Component extends DCLogic {
       bannerLink: (this.DATA.banner && this.DATA.banner.link) || '',
       bannerColor: (this.DATA.banner && this.DATA.banner.color) || '#189048',
       bannerHasLink: !!(this.DATA.banner && this.DATA.banner.link),
-      bannerNoLink: !(this.DATA.banner && this.DATA.banner.link)
+      bannerNoLink: !(this.DATA.banner && this.DATA.banner.link),
+
+      notifyVisible: !!((() => { const n=this.DATA.notify||{}; return n.enabled && n.formUrl; })()),
+      notifyLabel: (this.DATA.notify && this.DATA.notify.label) || '🔔 締切のお知らせを受け取る',
+      notifyUrl: (this.DATA.notify && this.DATA.notify.formUrl) || '#'
     };
   }
 }

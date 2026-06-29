@@ -268,6 +268,33 @@ textarea{resize:vertical;min-height:54px;}
         <button class="btn btn-primary" onclick="saveSite('お知らせ')">💾 お知らせを保存</button>
       </div>
     </div>
+    <div class="card">
+      <h2>🔔 通知登録フォーム</h2>
+      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">締切などのお知らせを受け取りたい生徒向けに、登録フォームへのボタンをサイトに表示できます。</p>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="nt_enabled" style="width:auto;margin:0;"
+            onchange="if(!siteConfig.notify)siteConfig.notify={enabled:false,label:'🔔 締切のお知らせを受け取る',formUrl:''}; siteConfig.notify.enabled=this.checked; markDirty();">
+          <span>通知登録ボタンを表示する</span>
+        </label>
+      </div>
+      <div class="field">
+        <label>ボタン文言</label>
+        <input id="nt_label" placeholder="🔔 締切のお知らせを受け取る"
+          onchange="if(!siteConfig.notify)siteConfig.notify={enabled:false,label:'🔔 締切のお知らせを受け取る',formUrl:''}; siteConfig.notify.label=this.value; markDirty();">
+      </div>
+      <div class="field">
+        <label>登録フォームURL（Googleフォーム等）</label>
+        <input id="nt_url" placeholder="https://docs.google.com/forms/..."
+          onchange="if(!siteConfig.notify)siteConfig.notify={enabled:false,label:'🔔 締切のお知らせを受け取る',formUrl:''}; siteConfig.notify.formUrl=this.value.trim(); markDirty();">
+      </div>
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+        <p style="font-size:11.5px;color:#856404;margin:0;line-height:1.6;">※ ここは「登録フォームへの導線」です。実際のメール/LINE送信は別途設定が必要です（GitHub Actions＋送信サービス）。登録の受け皿は Googleフォーム等をご利用ください。</p>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn btn-primary" onclick="saveSite('お知らせ')">💾 お知らせを保存</button>
+      </div>
+    </div>
   </div>
 
   <!-- ============ リンク点検 ============ -->
@@ -310,6 +337,23 @@ textarea{resize:vertical;min-height:54px;}
       </div>
       <div style="text-align:right;">
         <button class="btn btn-primary" onclick="changePass()">🔑 パスワードを変更して保存</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📊 アクセス解析（GoatCounter）</h2>
+      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">Cookie不要・個人を特定しない解析です。コードを設定するとサイトのアクセス数を計測できます。</p>
+      <div class="field">
+        <label>GoatCounterコード</label>
+        <input id="gc_code" placeholder="例: myschool（空欄で無効）"
+          onchange="if(!siteConfig.analytics)siteConfig.analytics={goatcounter:''}; siteConfig.analytics.goatcounter=this.value.trim(); renderGoatCounter(); markDirty();"
+          oninput="if(!siteConfig.analytics)siteConfig.analytics={goatcounter:''}; siteConfig.analytics.goatcounter=this.value.trim(); renderGoatCounter();">
+        <p style="font-size:11.5px;color:#888;margin-top:5px;">無料登録: <a href="https://www.goatcounter.com" target="_blank" rel="noopener">https://www.goatcounter.com</a></p>
+      </div>
+      <div id="gc_link_wrap" style="display:none;margin-bottom:10px;">
+        <a id="gc_link" href="#" target="_blank" rel="noopener" style="font-size:13px;color:var(--brand,#189048);font-weight:700;">📊 集計を見る →</a>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn btn-primary" onclick="saveSite('アクセス解析')">💾 保存</button>
       </div>
     </div>
   </div>
@@ -908,6 +952,30 @@ function renderBanner(){
   if(cf) cf.value=b.color||'#189048';
 }
 
+// ════════════ 通知登録フォーム ════════════
+function renderNotify(){
+  const n=siteConfig.notify||{};
+  const cb=document.getElementById('nt_enabled');
+  if(cb) cb.checked=!!n.enabled;
+  const lf=document.getElementById('nt_label');
+  if(lf) lf.value=n.label||'🔔 締切のお知らせを受け取る';
+  const uf=document.getElementById('nt_url');
+  if(uf) uf.value=n.formUrl||'';
+}
+
+// ════════════ GoatCounter設定 ════════════
+function renderGoatCounter(){
+  const gc=document.getElementById('gc_code');
+  const code=(siteConfig.analytics&&siteConfig.analytics.goatcounter)||'';
+  if(gc && gc.value !== code) gc.value=code;
+  const wrap=document.getElementById('gc_link_wrap');
+  const link=document.getElementById('gc_link');
+  if(wrap && link){
+    if(code){ wrap.style.display=''; link.href='https://'+code+'.goatcounter.com'; link.textContent='📊 集計を見る → https://'+code+'.goatcounter.com'; }
+    else { wrap.style.display='none'; }
+  }
+}
+
 // ════════════ 初期化 ════════════
 (async function init(){
   // 設定ファイルは公開なのでトークン無しで読める
@@ -918,6 +986,8 @@ function renderBanner(){
   if(!Array.isArray(siteConfig.statsGroups)) siteConfig.statsGroups=[];
   if(!siteConfig.asahi) siteConfig.asahi={};
   if(!siteConfig.banner) siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'};
+  if(!siteConfig.analytics) siteConfig.analytics={goatcounter:''};
+  if(!siteConfig.notify) siteConfig.notify={enabled:false,label:'🔔 締切のお知らせを受け取る',formUrl:''};
 
   // ゲート（既に開錠済みならスキップ）
   if(sessionStorage.getItem('admin_unlocked')==='1'){
@@ -940,6 +1010,8 @@ function renderBanner(){
   renderStats();
   renderNews();
   renderBanner();
+  renderNotify();
+  renderGoatCounter();
   loadForms();
   updateFab();
 })();
