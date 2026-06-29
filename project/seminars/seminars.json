@@ -253,5 +253,20 @@
     "pdf": "project/seminars/up_1782776951384.pdf",
     "accent": "#f97316",
     "tags": []
+  },
+  {
+    "id": "s19",
+    "title": "筑波大学　高校生のための体験学習",
+    "date": null,
+    "deadline": null,
+    "organizer": "筑波大学",
+    "target": null,
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "",
+    "accent": "#06b6d4",
+    "tags": [
+      "理系"
+    ]
   }
 ]
