@@ -8,7 +8,7 @@
     "target": "県立高校生",
     "format": "onsite",
     "applyUrl": "https://forms.office.com/r/4XUTaJXFkq",
-    "pdf": "seminars/SKM_651i26062910230.pdf",
+    "pdf": "project/seminars/SKM_651i26062910230.pdf",
     "accent": "#189048"
   },
   {
@@ -20,7 +20,7 @@
     "target": "高校生",
     "format": "onsite",
     "applyUrl": "",
-    "pdf": "seminars/SKM_651i26062910231.pdf",
+    "pdf": "project/seminars/SKM_651i26062910231.pdf",
     "accent": "#ee7e66"
   },
   {
@@ -31,8 +31,8 @@
     "organizer": "高校生みんなの夢AWARD実行委員会",
     "target": "高校生（先着500名）",
     "format": "onsite",
-    "applyUrl": "",
-    "pdf": "seminars/SKM_651i26062910232.pdf",
+    "applyUrl": "https://ws.formzu.net/dist/S36758700/",
+    "pdf": "project/seminars/SKM_651i26062910232.pdf",
     "accent": "#4fb8e8"
   },
   {
@@ -44,7 +44,7 @@
     "target": "高校生",
     "format": "online",
     "applyUrl": "",
-    "pdf": "seminars/SKM_651i26062910240.pdf",
+    "pdf": "project/seminars/SKM_651i26062910240.pdf",
     "accent": "#f7b500"
   },
   {
@@ -55,8 +55,8 @@
     "organizer": "日本科学未来館",
     "target": "高校生（学校団体）",
     "format": "onsite",
-    "applyUrl": "",
-    "pdf": "seminars/SKM_651i26062910250.pdf",
+    "applyUrl": "https://www.miraikan.jst.go.jp/visit/group/",
+    "pdf": "project/seminars/SKM_651i26062910250.pdf",
     "accent": "#2e9bd6"
   }
 ]
