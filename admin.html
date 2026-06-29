@@ -47,6 +47,14 @@ textarea{resize:vertical;min-height:54px;}
 .edit-form.open{display:block;}
 .toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s;z-index:999;max-width:90vw;}
 .toast.show{opacity:1;}
+/* 追従する保存ボタン */
+.fab-save{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:120;background:#189048;color:#fff;border:none;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 22px rgba(24,144,72,.45);font-family:inherit;display:none;align-items:center;gap:8px;transition:transform .15s,background .15s,box-shadow .15s;}
+.fab-save:hover{background:#146d39;transform:translateX(-50%) translateY(-2px);}
+.fab-save:active{transform:translateX(-50%) translateY(0);}
+.fab-save.dirty{background:#e0a800;box-shadow:0 6px 22px rgba(224,168,0,.5);animation:fabpulse 1.6s ease-in-out infinite;}
+.fab-save.dirty:hover{background:#c79400;}
+@keyframes fabpulse{0%,100%{box-shadow:0 6px 22px rgba(224,168,0,.5);}50%{box-shadow:0 6px 30px rgba(224,168,0,.85);}}
+@media(max-width:640px){.fab-save{width:calc(100% - 28px);justify-content:center;border-radius:12px;}}
 .token-input{display:flex;gap:8px;flex-wrap:wrap;}
 .token-input input{flex:1;min-width:200px;}
 .status{font-size:12px;color:#666;margin-top:6px;}
@@ -254,6 +262,7 @@ textarea{resize:vertical;min-height:54px;}
   </div>
 
 </div>
+<button class="fab-save" id="fabSave" onclick="saveActiveTab()">💾 保存</button>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -343,6 +352,7 @@ function tryUnlock(){
     sessionStorage.setItem('admin_unlocked','1');
     document.getElementById('gate').style.display='none';
     document.getElementById('app').style.display='';
+    updateFab();
   }else{
     document.getElementById('gateErr').textContent='パスワードが違います';
     document.getElementById('gatePass').value='';
@@ -353,6 +363,33 @@ function tryUnlock(){
 function showTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+name));
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateFab();
+}
+
+// ── 追従する保存ボタン（押しやすい位置・未保存を強調） ──
+let dirty=false;
+const TAB_SAVE_LABEL={seminars:'セミナー',links:'リンク集',stats:'統計データ',news:'新聞・アカウント',forms:'フォーム'};
+function markDirty(){ dirty=true; updateFab(); }
+function clearDirty(){ dirty=false; updateFab(); }
+function updateFab(){
+  const fab=document.getElementById('fabSave');
+  const active=document.querySelector('.tab.active');
+  const key=active?active.dataset.tab:'';
+  if(!key || key==='settings' || document.getElementById('app').style.display==='none'){
+    fab.style.display='none'; return;
+  }
+  fab.style.display='inline-flex';
+  fab.classList.toggle('dirty',dirty);
+  fab.textContent=(dirty?'● ':'💾 ')+'この'+(TAB_SAVE_LABEL[key]||'内容')+'を保存'+(dirty?'（未保存）':'');
+}
+function saveActiveTab(){
+  const key=document.querySelector('.tab.active').dataset.tab;
+  if(key==='seminars') saveSeminars();
+  else if(key==='links') saveSite('リンク集');
+  else if(key==='stats') saveSite('統計データ');
+  else if(key==='news') saveNews();
+  else if(key==='forms') saveForms();
 }
 
 // ════════════ セミナー ════════════
@@ -426,15 +463,16 @@ function addSeminar(){
     pdf:document.getElementById('ns_pdf').value||'',accent
   });
   ['title','organizer','date','deadline','target','applyUrl','pdf'].forEach(f=>{const el=document.getElementById('ns_'+f);if(el)el.value='';});
-  renderSeminars(); toggleAddSem();
+  renderSeminars(); toggleAddSem(); markDirty();
   showToast('追加しました。「セミナーを保存」で確定してください。');
 }
 function delSeminar(id){
   if(!confirm('このセミナーを削除しますか？')) return;
-  seminars=seminars.filter(s=>s.id!==id); renderSeminars();
+  seminars=seminars.filter(s=>s.id!==id); renderSeminars(); markDirty();
 }
 async function saveSeminars(){
   if(await putFile(SEM_FILE,seminars,'管理ページからセミナーを更新')){
+    clearDirty();
     showToast('✅ 保存しました（サイト反映まで約1〜2分）');
   }
 }
@@ -470,17 +508,17 @@ function renderSections(){
 function updSec(si,key,val){ siteConfig.sections[si][key]=val; }
 function updSecAccent(si,val){ siteConfig.sections[si].accent=val; siteConfig.sections[si].accentSoft=softColor(val); renderSections(); }
 function updLink(si,li,key,val){ siteConfig.sections[si].links[li][key]=val; if(key==='url') renderSections(); }
-function addLink(si){ siteConfig.sections[si].links.push({title:'',url:'',desc:''}); renderSections(); }
-function delLink(si,li){ siteConfig.sections[si].links.splice(li,1); renderSections(); }
+function addLink(si){ siteConfig.sections[si].links.push({title:'',url:'',desc:''}); renderSections(); markDirty(); }
+function delLink(si,li){ siteConfig.sections[si].links.splice(li,1); renderSections(); markDirty(); }
 function addSection(){
   const used=new Set(siteConfig.sections.map(s=>s.accent));
   const accent=ACCENTS.find(c=>!used.has(c))||ACCENTS[siteConfig.sections.length%ACCENTS.length];
   siteConfig.sections.push({key:'cat'+(siteConfig.sections.length+1),label:'新しいカテゴリ',accent,accentSoft:softColor(accent),desc:'',links:[]});
-  renderSections();
+  renderSections(); markDirty();
 }
 function delSection(si){
   if(!confirm('このカテゴリ（中のリンクも含む）を削除しますか？')) return;
-  siteConfig.sections.splice(si,1); renderSections();
+  siteConfig.sections.splice(si,1); renderSections(); markDirty();
 }
 
 // ════════════ 統計 ════════════
@@ -518,14 +556,14 @@ function renderStats(){
     </div>`).join('');
 }
 function updStatTop(i,key,val){ siteConfig.statsTop[i][key]=val; if(key==='url') renderStats(); }
-function addStatsTop(){ siteConfig.statsTop.push({title:'',url:'',desc:''}); renderStats(); }
-function delStatTop(i){ siteConfig.statsTop.splice(i,1); renderStats(); }
+function addStatsTop(){ siteConfig.statsTop.push({title:'',url:'',desc:''}); renderStats(); markDirty(); }
+function delStatTop(i){ siteConfig.statsTop.splice(i,1); renderStats(); markDirty(); }
 function updGroup(gi,key,val){ siteConfig.statsGroups[gi][key]=val; }
 function updGroupLink(gi,li,key,val){ siteConfig.statsGroups[gi].links[li][key]=val; if(key==='url') renderStats(); }
-function addGroupLink(gi){ siteConfig.statsGroups[gi].links.push({title:'',url:'',desc:''}); renderStats(); }
-function delGroupLink(gi,li){ siteConfig.statsGroups[gi].links.splice(li,1); renderStats(); }
-function addStatsGroup(){ siteConfig.statsGroups.push({key:'g'+(siteConfig.statsGroups.length+1),label:'新しいグループ',links:[]}); renderStats(); }
-function delStatsGroup(gi){ if(!confirm('このグループを削除しますか？'))return; siteConfig.statsGroups.splice(gi,1); renderStats(); }
+function addGroupLink(gi){ siteConfig.statsGroups[gi].links.push({title:'',url:'',desc:''}); renderStats(); markDirty(); }
+function delGroupLink(gi,li){ siteConfig.statsGroups[gi].links.splice(li,1); renderStats(); markDirty(); }
+function addStatsGroup(){ siteConfig.statsGroups.push({key:'g'+(siteConfig.statsGroups.length+1),label:'新しいグループ',links:[]}); renderStats(); markDirty(); }
+function delStatsGroup(gi){ if(!confirm('このグループを削除しますか？'))return; siteConfig.statsGroups.splice(gi,1); renderStats(); markDirty(); }
 
 // ════════════ 新聞・アカウント ════════════
 function renderNews(){
@@ -544,12 +582,12 @@ async function saveNews(){
     pw:document.getElementById('as_pw').value,
     desc:document.getElementById('as_desc').value
   };
-  if(await putFile(SITE_FILE,siteConfig,'管理ページから新聞アカウントを更新')) showToast('✅ 保存しました（サイト反映まで約1〜2分）');
+  if(await putFile(SITE_FILE,siteConfig,'管理ページから新聞アカウントを更新')){ clearDirty(); showToast('✅ 保存しました（サイト反映まで約1〜2分）'); }
 }
 
 // ── サイト設定の一括保存 ──
 async function saveSite(label){
-  if(await putFile(SITE_FILE,siteConfig,'管理ページから'+label+'を更新')) showToast('✅ '+label+'を保存しました（反映まで約1〜2分）');
+  if(await putFile(SITE_FILE,siteConfig,'管理ページから'+label+'を更新')){ clearDirty(); showToast('✅ '+label+'を保存しました（反映まで約1〜2分）'); }
 }
 
 // ════════════ Googleフォーム ════════════
@@ -568,7 +606,7 @@ async function saveForms(){
       f.url=f.url.replace('/viewform','').replace(/\?.*$/,'')+'/viewform?embedded=true';
     }
   });
-  if(await putFile(FORMS_FILE,forms,'管理ページからフォーム設定を更新')) showToast('✅ フォームを保存しました（反映まで約1〜2分）');
+  if(await putFile(FORMS_FILE,forms,'管理ページからフォーム設定を更新')){ clearDirty(); showToast('✅ フォームを保存しました（反映まで約1〜2分）'); }
 }
 
 // ════════════ パスワード変更 ════════════
@@ -601,6 +639,12 @@ async function changePass(){
     document.getElementById('gatePass').focus();
   }
 
+  // 編集を検知して保存ボタンを「未保存」状態にする（設定タブ除く）
+  const appEl=document.getElementById('app');
+  const onEdit=(e)=>{ if(!document.getElementById('pane-settings').contains(e.target)) markDirty(); };
+  appEl.addEventListener('input',onEdit);
+  appEl.addEventListener('change',onEdit);
+
   // 各タブ描画
   verifyToken();
   reloadSeminars();
@@ -608,7 +652,11 @@ async function changePass(){
   renderStats();
   renderNews();
   loadForms();
+  updateFab();
 })();
+
+// 未保存のまま離脱しようとしたら確認
+window.addEventListener('beforeunload',(e)=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
 </script>
 </body>
 </html>
