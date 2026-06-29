@@ -90,6 +90,17 @@ body{margin:0;}
     </div>
   </header>
 
+  <sc-if value="{{ bannerVisible }}">
+    <div style="background:{{ bannerColor }};color:#fff;padding:10px 24px;text-align:center;font-family:var(--font-display);font-weight:700;font-size:13.5px;line-height:1.5;">
+      <sc-if value="{{ bannerHasLink }}">
+        <a href="{{ bannerLink }}" target="_blank" rel="noopener noreferrer" style="color:#fff;text-decoration:underline;text-underline-offset:3px;">{{ bannerText }} ↗</a>
+      </sc-if>
+      <sc-if value="{{ bannerNoLink }}">
+        <span>{{ bannerText }}</span>
+      </sc-if>
+    </div>
+  </sc-if>
+
   <section style="background:var(--surface-2);border-bottom:1px solid var(--border);">
     <div style="max-width:1200px;margin:0 auto;padding:22px 24px 26px;">
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
@@ -101,6 +112,9 @@ body{margin:0;}
           </div>
           <h2 style="margin:4px 0 0;font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:-.01em;color:var(--text-strong);">セミナー・イベント情報</h2>
           <p style="margin:3px 0 0;font-size:12.5px;color:var(--text-muted);">クリックでチラシ（PDF）／ダブルクリックで申込ページが開きます。</p>
+          <sc-if value="{{ hasPast }}">
+            <button onClick="{{ toggleShowPast }}" style="margin-top:8px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:var(--font-display);font-weight:700;font-size:11.5px;padding:5px 12px;border-radius:999px;transition:all .18s;">{{ pastToggleLabel }}</button>
+          </sc-if>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="display:inline-flex;padding:3px;background:var(--sunken);border-radius:999px;border:1px solid var(--border);">
@@ -134,6 +148,9 @@ body{margin:0;}
                   <span style="position:absolute;top:10px;right:10px;{{ ev.formatBadge }}">{{ ev.formatLabel }}</span>
                   <sc-if value="{{ ev.isSoon }}" hint-placeholder-val="{{ false }}">
                     <span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:var(--danger-text);color:#fff;font-family:var(--font-display);font-weight:700;font-size:10.5px;box-shadow:0 2px 6px rgba(0,0,0,.25);">{{ ev.soonLabel }}</span>
+                  </sc-if>
+                  <sc-if value="{{ ev.isPast }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.45);color:#fff;font-family:var(--font-display);font-weight:700;font-size:10.5px;box-shadow:0 2px 6px rgba(0,0,0,.25);">{{ ev.pastLabel }}</span>
                   </sc-if>
                 </div>
                 <div style="padding:13px 15px 15px;">
@@ -190,7 +207,7 @@ body{margin:0;}
                   </td>
                   <td style="padding:13px 12px;white-space:nowrap;font-family:var(--font-display);font-weight:700;color:var(--text-body);">{{ ev.dateLabel }}</td>
                   <td style="padding:13px 12px;white-space:nowrap;color:var(--text-body);">
-                    <span style="display:inline-flex;align-items:center;gap:6px;">{{ ev.deadlineLabel }}<sc-if value="{{ ev.isSoon }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px;border-radius:999px;background:var(--danger-soft);color:var(--danger-text);font-family:var(--font-display);font-weight:700;font-size:10px;">{{ ev.soonLabel }}</span></sc-if></span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;">{{ ev.deadlineLabel }}<sc-if value="{{ ev.isSoon }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px;border-radius:999px;background:var(--danger-soft);color:var(--danger-text);font-family:var(--font-display);font-weight:700;font-size:10px;">{{ ev.soonLabel }}</span></sc-if><sc-if value="{{ ev.isPast }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px;border-radius:999px;background:#e5e7eb;color:#6b7280;font-family:var(--font-display);font-weight:700;font-size:10px;">{{ ev.pastLabel }}</span></sc-if></span>
                   </td>
                   <td style="padding:13px 12px;white-space:nowrap;"><span style="{{ ev.formatBadge }}">{{ ev.formatLabel }}</span></td>
                   <td style="padding:13px 12px;white-space:nowrap;font-size:12px;color:var(--text-muted);">{{ ev.target }}</td>
@@ -478,7 +495,7 @@ body{margin:0;}
 class Component extends DCLogic {
   constructor(props){
     super(props);
-    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0 };
+    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0, showPast:false };
     this.trackRef = React.createRef();
     this._evtPaused = false;
 
@@ -557,7 +574,8 @@ class Component extends DCLogic {
         {id:'s3',title:'データサイエンス入門セミナー｜統計で社会を読む',date:'2026-08-20',deadline:'2026-08-10',organizer:'大学連携データサイエンス教育機構',target:'高校全学年',format:'hybrid',applyUrl:'https://example.org/ds-seminar',pdf:'project/seminars/sample-datascience.pdf',accent:'#4fb8e8'},
         {id:'s4',title:'地域フィールドワーク成果発表会',date:'2026-09-07',deadline:'2026-08-28',organizer:'ふるさと探究プロジェクト実行委員会',target:'高校1〜3年',format:'onsite',applyUrl:'https://example.org/fieldwork-presentation',pdf:'project/seminars/sample-fieldwork.pdf',accent:'#f7b500'},
         {id:'s5',title:'論文の書き方・引用のルール 基礎講座',date:'2026-09-21',deadline:'2026-09-12',organizer:'学術リテラシー支援室',target:'高校2〜3年',format:'online',applyUrl:'https://example.org/academic-writing',pdf:'project/seminars/sample-writing.pdf',accent:'#2e9bd6'}
-      ]
+      ],
+      banner:{enabled:false,text:'',link:'',color:'#189048'}
     };
   }
 
@@ -580,6 +598,7 @@ class Component extends DCLogic {
       if(Array.isArray(cfg.statsTop)) this.DATA.statsTop = cfg.statsTop;
       if(Array.isArray(cfg.statsGroups)) this.DATA.statsGroups = cfg.statsGroups;
       if(cfg.asahi && typeof cfg.asahi==='object') this.DATA.asahi = Object.assign({}, this.DATA.asahi, cfg.asahi);
+      if(cfg.banner) this.DATA.banner = cfg.banner;
       // カテゴリチップをセクションに合わせて更新（新規セクションは末尾に追加）
       this.DATA.generic.forEach(s=>{
         const c = this.DATA.cats.find(x=>x.key===s.key);
@@ -714,11 +733,14 @@ class Component extends DCLogic {
     const openClick = (ev)=> function(){ clearTimeout(self2._clickT); const href = ev.pdf || ev.applyUrl; self2._clickT = setTimeout(()=>{ if(href) window.open(href,'_blank','noopener'); }, 230); };
     const openDbl = (ev)=> function(){ clearTimeout(self2._clickT); if(ev.applyUrl) window.open(ev.applyUrl,'_blank','noopener'); };
     const evtRaw = st.evtData || [];
-    const events = evtRaw.map(ev=>{
+    const evtAll = evtRaw.map(ev=>{
       const accent = ev.accent || '#189048';
       const fm = fmtMap[ev.format] || {label:ev.format||'—',c:'#6e7363'};
       const thumb = st.evtThumbs[ev.id] || '';
       const dd = daysTo(ev.deadline);
+      const dref = ev.deadline || ev.date;
+      const dnum = daysTo(dref);
+      const isPast = (dnum !== null && dnum < 0);
       const isSoon = dd!==null && dd>=0 && dd<=7;
       return {
         id:ev.id, title:ev.title||'（無題）', accent,
@@ -728,10 +750,14 @@ class Component extends DCLogic {
         thumb, hasThumb:!!thumb, noThumb:!thumb, posterBg:this.darken(accent,0.5),
         thumbImg: thumb ? React.createElement('img',{src:thumb,alt:'',style:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',objectPosition:'top center'}}) : null,
         isSoon, soonLabel: dd===0?'本日締切':('締切まであと'+dd+'日'),
+        isPast, pastLabel:'終了',
         applyUrl:ev.applyUrl||'#', pdfHref:ev.pdf||ev.applyUrl||'#',
         onClick:openClick(ev), onDblClick:openDbl(ev)
       };
     });
+    const pastCount = evtAll.filter(ev=>ev.isPast).length;
+    const hasPast = pastCount > 0;
+    const events = evtAll.filter(ev=>!ev.isPast || st.showPast);
     const evtDots = events.map((e,i)=>({
       onClick:(()=>{ const idx=i; return ()=>this.goEvt(idx); })(),
       style:{cursor:'pointer',border:'none',padding:0,height:'8px',borderRadius:'999px',transition:'all .2s',width: i===st.evtIndex?'22px':'8px',background: i===st.evtIndex?'var(--brand)':'var(--border-strong)'}
@@ -837,7 +863,19 @@ class Component extends DCLogic {
       activeGroupEmpty: activeGroupLinks.length===0
       ,
       formsData: st.formsData,
-      formsVisible: !!(st.formsData && st.formsData.length)
+      formsVisible: !!(st.formsData && st.formsData.length),
+
+      showPast: st.showPast,
+      hasPast, pastCount,
+      toggleShowPast: ()=>this.setState(s=>({showPast:!s.showPast})),
+      pastToggleLabel: st.showPast ? '終了したセミナーを隠す' : ('終了したセミナー('+pastCount+')も表示'),
+
+      bannerVisible: !!(this.DATA.banner && this.DATA.banner.enabled && this.DATA.banner.text && String(this.DATA.banner.text).trim()),
+      bannerText: (this.DATA.banner && this.DATA.banner.text) || '',
+      bannerLink: (this.DATA.banner && this.DATA.banner.link) || '',
+      bannerColor: (this.DATA.banner && this.DATA.banner.color) || '#189048',
+      bannerHasLink: !!(this.DATA.banner && this.DATA.banner.link),
+      bannerNoLink: !(this.DATA.banner && this.DATA.banner.link)
     };
   }
 }

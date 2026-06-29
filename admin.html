@@ -114,6 +114,7 @@ textarea{resize:vertical;min-height:54px;}
     <div class="tab" data-tab="stats" onclick="showTab('stats')">📊 統計データ</div>
     <div class="tab" data-tab="news" onclick="showTab('news')">📰 新聞・アカウント</div>
     <div class="tab" data-tab="forms" onclick="showTab('forms')">📝 Googleフォーム</div>
+    <div class="tab" data-tab="banner" onclick="showTab('banner')">📢 お知らせ</div>
     <div class="tab" data-tab="settings" onclick="showTab('settings')">⚙️ 設定</div>
   </div>
 
@@ -228,6 +229,26 @@ textarea{resize:vertical;min-height:54px;}
       </div>
       <div style="text-align:right;">
         <button class="btn btn-primary" onclick="saveForms()">💾 フォームを保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ お知らせバナー ============ -->
+  <div class="tabpane" id="pane-banner">
+    <div class="card">
+      <h2>📢 お知らせバナー</h2>
+      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">サイト上部に帯状のお知らせを表示できます。</p>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="bn_enabled" onchange="if(!siteConfig.banner)siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'}; siteConfig.banner.enabled=this.checked; markDirty();" style="width:auto;margin:0;">
+          <span>バナーを表示する</span>
+        </label>
+      </div>
+      <div class="field"><label>お知らせ本文 *</label><input id="bn_text" placeholder="例: 夏のセミナー申込受付中！" onchange="if(!siteConfig.banner)siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'}; siteConfig.banner.text=this.value; markDirty();"></div>
+      <div class="field"><label>リンクURL（任意）</label><input id="bn_link" placeholder="https://..." onchange="if(!siteConfig.banner)siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'}; siteConfig.banner.link=this.value; markDirty();"></div>
+      <div class="field"><label>背景色</label><input type="color" id="bn_color" value="#189048" onchange="if(!siteConfig.banner)siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'}; siteConfig.banner.color=this.value; markDirty();"></div>
+      <div style="margin-top:12px;text-align:right;">
+        <button class="btn btn-primary" onclick="saveSite('お知らせ')">💾 お知らせを保存</button>
       </div>
     </div>
   </div>
@@ -369,7 +390,7 @@ function showTab(name){
 
 // ── 追従する保存ボタン（押しやすい位置・未保存を強調） ──
 let dirty=false;
-const TAB_SAVE_LABEL={seminars:'セミナー',links:'リンク集',stats:'統計データ',news:'新聞・アカウント',forms:'フォーム'};
+const TAB_SAVE_LABEL={seminars:'セミナー',links:'リンク集',stats:'統計データ',news:'新聞・アカウント',forms:'フォーム',banner:'お知らせ'};
 function markDirty(){ dirty=true; updateFab(); }
 function clearDirty(){ dirty=false; updateFab(); }
 function updateFab(){
@@ -390,6 +411,7 @@ function saveActiveTab(){
   else if(key==='stats') saveSite('統計データ');
   else if(key==='news') saveNews();
   else if(key==='forms') saveForms();
+  else if(key==='banner') saveSite('お知らせ');
 }
 
 // ════════════ セミナー ════════════
@@ -621,6 +643,19 @@ async function changePass(){
   }
 }
 
+// ════════════ お知らせバナー ════════════
+function renderBanner(){
+  const b=siteConfig.banner||{};
+  const cb=document.getElementById('bn_enabled');
+  if(cb) cb.checked=!!b.enabled;
+  const tf=document.getElementById('bn_text');
+  if(tf) tf.value=b.text||'';
+  const lf=document.getElementById('bn_link');
+  if(lf) lf.value=b.link||'';
+  const cf=document.getElementById('bn_color');
+  if(cf) cf.value=b.color||'#189048';
+}
+
 // ════════════ 初期化 ════════════
 (async function init(){
   // 設定ファイルは公開なのでトークン無しで読める
@@ -630,6 +665,7 @@ async function changePass(){
   if(!Array.isArray(siteConfig.statsTop)) siteConfig.statsTop=[];
   if(!Array.isArray(siteConfig.statsGroups)) siteConfig.statsGroups=[];
   if(!siteConfig.asahi) siteConfig.asahi={};
+  if(!siteConfig.banner) siteConfig.banner={enabled:false,text:'',link:'',color:'#189048'};
 
   // ゲート（既に開錠済みならスキップ）
   if(sessionStorage.getItem('admin_unlocked')==='1'){
@@ -651,6 +687,7 @@ async function changePass(){
   renderSections();
   renderStats();
   renderNews();
+  renderBanner();
   loadForms();
   updateFab();
 })();
