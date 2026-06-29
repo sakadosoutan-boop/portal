@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PDFをGemini Files API経由で解析してseminars.jsonを更新するスクリプト。
+PDF・画像をGemini Files API経由で解析してseminars.jsonを更新するスクリプト。
 使い方: GEMINI_API_KEY=xxx python3 scripts/update_seminars.py
 """
 import os
@@ -17,7 +17,16 @@ SEMINARS_JSON = SEMINARS_DIR / "seminars.json"
 CACHE_FILE = Path("scripts/.seminars_cache.json")
 BASE_URL = "https://generativelanguage.googleapis.com"
 
-EXTRACT_PROMPT = """このPDFはセミナー・講座・ワークショップのチラシまたは要項です。
+# 対応拡張子とMIMEタイプのマッピング
+MIME_TYPES = {
+    ".pdf":  "application/pdf",
+    ".jpg":  "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png":  "image/png",
+    ".webp": "image/webp",
+}
+
+EXTRACT_PROMPT = """このPDF・画像はセミナー・講座・ワークショップのチラシまたは要項です。
 以下のJSONフォーマットで情報を抽出してください。
 値が不明・記載なしの場合は null にしてください。
 
@@ -38,7 +47,7 @@ ACCENT_COLORS = ["#189048", "#ee7e66", "#4fb8e8", "#f7b500", "#2e9bd6",
                  "#a855f7", "#f97316", "#06b6d4", "#84cc16", "#ec4899"]
 
 
-def pdf_hash(path: Path) -> str:
+def file_hash(path: Path) -> str:
     h = hashlib.sha256()
     h.update(path.read_bytes())
     return h.hexdigest()[:16]
@@ -73,21 +82,27 @@ def api_request(method: str, path: str, body=None, headers=None) -> dict:
         raise RuntimeError(f"HTTP {e.code}: {err[:300]}")
 
 
-def upload_pdf(pdf_path: Path) -> str | None:
-    """PDFをGemini Files APIにアップロードしてfileUriを返す。"""
-    pdf_bytes = pdf_path.read_bytes()
-    size = len(pdf_bytes)
+def get_mime_type(path: Path) -> str:
+    """拡張子からMIMEタイプを返す。不明は application/octet-stream。"""
+    return MIME_TYPES.get(path.suffix.lower(), "application/octet-stream")
+
+
+def upload_file(file_path: Path) -> str | None:
+    """ファイルをGemini Files APIにアップロードしてfileUriを返す。"""
+    file_bytes = file_path.read_bytes()
+    size = len(file_bytes)
+    mime_type = get_mime_type(file_path)
 
     # Step1: アップロードセッション開始
     url = f"{BASE_URL}/upload/v1beta/files?key={GEMINI_API_KEY}"
-    meta = json.dumps({"file": {"display_name": pdf_path.name}}).encode()
+    meta = json.dumps({"file": {"display_name": file_path.name}}).encode()
     req = urllib.request.Request(
         url, data=meta,
         headers={
             "X-Goog-Upload-Protocol": "resumable",
             "X-Goog-Upload-Command": "start",
             "X-Goog-Upload-Header-Content-Length": str(size),
-            "X-Goog-Upload-Header-Content-Type": "application/pdf",
+            "X-Goog-Upload-Header-Content-Type": mime_type,
             "Content-Type": "application/json",
         },
         method="POST"
@@ -105,7 +120,7 @@ def upload_pdf(pdf_path: Path) -> str | None:
 
     # Step2: ファイル本体を送信
     req2 = urllib.request.Request(
-        upload_url, data=pdf_bytes,
+        upload_url, data=file_bytes,
         headers={
             "Content-Length": str(size),
             "X-Goog-Upload-Offset": "0",
@@ -135,12 +150,12 @@ def delete_file(file_uri: str):
         pass
 
 
-def call_gemini(file_uri: str) -> dict | None:
+def call_gemini(file_uri: str, mime_type: str) -> dict | None:
     payload = {
         "contents": [{
             "parts": [
                 {"text": EXTRACT_PROMPT},
-                {"file_data": {"mime_type": "application/pdf", "file_uri": file_uri}}
+                {"file_data": {"mime_type": mime_type, "file_uri": file_uri}}
             ]
         }],
         "generationConfig": {"temperature": 0.1}
@@ -195,43 +210,57 @@ def pick_accent(seminars: list) -> str:
     return ACCENT_COLORS[len(seminars) % len(ACCENT_COLORS)]
 
 
+def glob_target_files() -> list:
+    """対象ファイル（PDF・画像）を列挙する。大文字拡張子も含む。"""
+    files = []
+    for ext in MIME_TYPES:
+        # 小文字
+        files.extend(SEMINARS_DIR.glob(f"*{ext}"))
+        # 大文字
+        files.extend(SEMINARS_DIR.glob(f"*{ext.upper()}"))
+    # 重複除去してソート
+    return sorted(set(files))
+
+
 def main():
     if not GEMINI_API_KEY:
         print("ERROR: GEMINI_API_KEY が設定されていません")
         raise SystemExit(1)
 
-    pdfs = sorted(SEMINARS_DIR.glob("*.pdf"))
-    if not pdfs:
-        print("PDFが見つかりません:", SEMINARS_DIR)
+    target_files = glob_target_files()
+    if not target_files:
+        print("対象ファイル（PDF/画像）が見つかりません:", SEMINARS_DIR)
         return
 
     seminars = load_seminars()
     cache = load_cache()
     changed = False
 
-    for pdf_path in pdfs:
-        rel_path = f"seminars/{pdf_path.name}"
-        h = pdf_hash(pdf_path)
+    for file_path in target_files:
+        # seminars.json の pdf フィールドは "project/seminars/<name>" 形式
+        rel_path = f"project/seminars/{file_path.name}"
+        mime_type = get_mime_type(file_path)
+        h = file_hash(file_path)
 
         existing = next((s for s in seminars if s.get("pdf") == rel_path), None)
         already_processed = (
             existing and
             existing.get("title") and
             "自動取得中" not in existing.get("title", "") and
-            cache.get(pdf_path.name) == h
+            cache.get(file_path.name) == h
         )
         if already_processed:
-            print(f"skip  {pdf_path.name} (unchanged)")
+            print(f"skip  {file_path.name} (unchanged)")
             continue
 
-        print(f"upload {pdf_path.name} ({pdf_path.stat().st_size // 1024}KB) ...", end=" ", flush=True)
-        file_uri = upload_pdf(pdf_path)
+        print(f"upload {file_path.name} ({file_path.stat().st_size // 1024}KB) ...", end=" ", flush=True)
+        file_uri = upload_file(file_path)
         if not file_uri:
             print("upload FAILED")
             continue
         print(f"ok → extract ...", end=" ", flush=True)
 
-        data = call_gemini(file_uri)
+        data = call_gemini(file_uri, mime_type)
         delete_file(file_uri)
 
         if data is None:
@@ -244,7 +273,7 @@ def main():
         else:
             entry = {
                 "id": next_id(seminars),
-                "title": data.get("title") or pdf_path.stem,
+                "title": data.get("title") or file_path.stem,
                 "date": data.get("date"),
                 "deadline": data.get("deadline"),
                 "organizer": data.get("organizer"),
@@ -257,7 +286,7 @@ def main():
             seminars.append(entry)
             print(f"added: {entry['title']}")
 
-        cache[pdf_path.name] = h
+        cache[file_path.name] = h
         changed = True
         time.sleep(2)
 
@@ -266,7 +295,7 @@ def main():
         save_cache(cache)
         print(f"\nseminars.json updated ({len(seminars)} entries)")
     else:
-        print("変更なし（全PDF処理済みまたはAPIエラー）")
+        print("変更なし（全ファイル処理済みまたはAPIエラー）")
 
 
 if __name__ == "__main__":

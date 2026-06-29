@@ -134,11 +134,13 @@ textarea{resize:vertical;min-height:54px;}
       <h2>📋 セミナー一覧・編集</h2>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap;">
         <span class="status" id="semStatus"></span>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="reloadSeminars()">🔄 再読み込み</button>
+          <button class="btn btn-ghost btn-sm" onclick="triggerAiReadChirashi()" title="GitHub ActionsのworkflowをAPIで起動します">🤖 AIでチラシを読み取る</button>
           <button class="btn btn-primary btn-sm" onclick="toggleAddSem()">＋ 新規追加</button>
         </div>
       </div>
+      <p style="font-size:11px;color:#888;margin:-8px 0 10px;">※ この機能には GEMINI_API_KEY（GitHubリポジトリのSecret）が必要です。無料枠の上限に達している場合は時間をおいて再実行してください。</p>
       <div class="item" id="addSem" style="display:none;background:#f0fdf4;border-color:#189048;">
         <div class="item-info">
           <div class="row">
@@ -402,6 +404,29 @@ async function putFile(path,obj,message){
     if(!r.ok){ const e=await r.json(); showToast('保存エラー: '+(e.message||r.status),'#dc2626'); return false; }
     return true;
   }catch(e){ showToast('保存エラー: '+e.message,'#dc2626'); return false; }
+}
+
+// ── AI チラシ読み取り（workflow_dispatch） ─────────
+async function triggerAiReadChirashi(){
+  const t=getToken();
+  if(!t){ showToast('この機能にはGitHubトークンが必要です（設定タブ）','#dc2626'); showTab('settings'); return; }
+  try{
+    const r=await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/update-seminars.yml/dispatches`,
+      {
+        method:'POST',
+        headers:Object.assign({'Content-Type':'application/json','Accept':'application/vnd.github+json'},auth(t)),
+        body:JSON.stringify({ref:'main'})
+      }
+    );
+    if(r.status===204){
+      showToast('🤖 AI読み取りを開始しました。1〜2分後に「再読み込み」を押すと反映されます','#189048');
+    } else {
+      let msg=r.status;
+      try{ const e=await r.json(); msg=(e.message||r.status); }catch(e){}
+      showToast('エラー: '+msg,'#dc2626');
+    }
+  }catch(e){ showToast('ネットワークエラー: '+e.message,'#dc2626'); }
 }
 
 // ── チラシ アップロード ────────────────────────────
