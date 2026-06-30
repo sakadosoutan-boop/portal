@@ -315,22 +315,18 @@ textarea{resize:vertical;min-height:54px;}
   <!-- ============ 設定 ============ -->
   <div class="tabpane" id="pane-settings">
     <div class="card">
-      <h2>⚙️ GitHub 接続（保存に必要・端末ごと1回だけ）</h2>
+      <h2>🔗 Cloudflare Worker 接続状態</h2>
       <div class="setup-box">
-        <p>変更を保存するには <a href="https://github.com/settings/tokens/new?scopes=repo&description=portal-admin" target="_blank">GitHubトークン（repoスコープ）</a> が必要です。<br>
-        一度入力すると <strong>このブラウザに記憶</strong> され、次回からは入力不要です（他の人には見えません）。<br>
-        閲覧だけならトークンは不要です。</p>
+        <p>保存機能は <strong>Cloudflare Worker</strong> 経由で動作します（<code>cloudflare-worker.js</code> をデプロイ済みの場合）。<br>
+        パスワードだけで保存できます。GitHubトークンは不要です。</p>
       </div>
-      <div class="token-input">
-        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
-        <button class="btn btn-primary" onclick="saveToken()">保存</button>
-        <button class="btn btn-ghost" onclick="clearToken()">削除</button>
-      </div>
-      <div class="status" id="tokenStatus"></div>
+      <div id="workerUrlDisplay" style="font-size:13px;color:#555;margin-bottom:10px;word-break:break-all;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="checkWorker()">🔌 接続テスト</button>
+      <div class="status" id="workerStatus" style="margin-top:6px;"></div>
     </div>
     <div class="card">
       <h2>🔑 管理パスワードの変更</h2>
-      <p style="font-size:12.5px;color:#666;margin-bottom:12px;">この管理ページを開くためのパスワードです（初期値: 3535）。変更は保存後、全員に反映されます。</p>
+      <p style="font-size:12.5px;color:#666;margin-bottom:12px;">この管理ページを開くためのパスワードです（初期値: 3535）。変更後は、CloudflareダッシュボードのWorkerシークレット <code>ADMIN_PASS</code> も同じ値に更新してください。</p>
       <div class="row">
         <div class="field"><label>新しいパスワード</label><input id="newPass" placeholder="新しいパスワード"></div>
         <div class="field"><label>確認のためもう一度</label><input id="newPass2" placeholder="もう一度入力"></div>
@@ -367,12 +363,15 @@ const OWNER='sakadosoutan-boop', REPO='portal';
 const SITE_FILE='project/site-config.json';
 const SEM_FILE='project/seminars/seminars.json';
 const FORMS_FILE='project/forms-config.json';
+// ▼ Cloudflare Worker deploy 後に実際のURLへ変更してコミット
+const WORKER_URL='https://portal-proxy.YOUR_SUBDOMAIN.workers.dev';
 const ACCENTS=['#189048','#ee7e66','#4fb8e8','#f7b500','#2e9bd6','#a855f7','#f97316','#06b6d4','#84cc16','#ec4899'];
 const FMT_LABEL={online:'オンライン',onsite:'対面',hybrid:'ハイブリッド'};
 const FMT_CLASS={online:'badge-online',onsite:'badge-onsite',hybrid:'badge-hybrid'};
 
 let siteConfig={adminPass:'3535',sections:[],statsTop:[],statsGroups:[],asahi:{}};
 let seminars=[];
+let sessionPass='';
 let semSha=null;
 
 // ── 並び替え汎用ヘルパ ────────────────────────────
@@ -387,8 +386,9 @@ let dragSecIdx=null;
 function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64decode(b64){ return decodeURIComponent(escape(atob(String(b64).replace(/\s/g,'')))); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function api(path){ return `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`; }
-function auth(t){ return { Authorization:`token ${t}` }; }
+function workerFile(p){ return `${WORKER_URL}/api/file?path=${encodeURIComponent(p)}`; }
+function wh(){ return {'Content-Type':'application/json','X-Admin-Pass':sessionPass}; }
+function workerReady(){ return WORKER_URL&&!WORKER_URL.includes('YOUR_SUBDOMAIN'); }
 function softColor(hex){
   try{ let h=String(hex).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
     const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
@@ -404,28 +404,17 @@ function showToast(msg,bg='#189048'){
   setTimeout(()=>el.classList.remove('show'),3800);
 }
 
-// ── Token ─────────────────────────────────────────
-function getToken(){ return localStorage.getItem('gh_token')||''; }
-function saveToken(){
-  const t=document.getElementById('tokenInput').value.trim();
-  if(!t){ showToast('トークンを入力してください','#dc2626'); return; }
-  localStorage.setItem('gh_token',t);
-  document.getElementById('tokenInput').value='';
-  verifyToken();
-}
-function clearToken(){
-  localStorage.removeItem('gh_token');
-  const el=document.getElementById('tokenStatus'); el.textContent='トークンを削除しました'; el.className='status';
-}
-async function verifyToken(){
-  const t=getToken(); const el=document.getElementById('tokenStatus');
-  if(!t){ el.textContent='トークン未設定（保存時に必要）'; el.className='status'; return; }
+// ── Worker 接続テスト ───────────────────────────────
+async function checkWorker(){
+  const el=document.getElementById('workerStatus');
+  if(!workerReady()){ el.textContent='Worker URLが設定されていません'; el.className='status err'; return; }
   el.textContent='確認中...'; el.className='status';
   try{
-    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`,{headers:auth(t)});
+    const r=await fetch(`${WORKER_URL}/api/check`,{headers:wh()});
     if(r.ok){ el.textContent='✅ 接続OK（保存できます）'; el.className='status ok'; }
-    else{ el.textContent='❌ トークンが無効、またはアクセス権がありません'; el.className='status err'; }
-  }catch(e){ el.textContent='❌ 接続エラー'; el.className='status err'; }
+    else if(r.status===401){ el.textContent='❌ パスワードが一致しません（WorkerのADMIN_PASSを確認）'; el.className='status err'; }
+    else{ el.textContent='❌ Workerエラー: '+r.status; el.className='status err'; }
+  }catch(e){ el.textContent='❌ 接続エラー（Worker URLを確認）'; el.className='status err'; }
 }
 
 // ── 汎用 読み込み/保存 ─────────────────────────────
@@ -433,18 +422,17 @@ async function loadJson(path,fallback){
   try{ const r=await fetch(path+'?_='+Date.now()); if(r.ok) return await r.json(); }catch(e){}
   return fallback;
 }
-async function getSha(path,t){
-  try{ const r=await fetch(api(path),{headers:auth(t)}); if(r.ok) return (await r.json()).sha; }catch(e){}
+async function getSha(path){
+  try{ const r=await fetch(workerFile(path),{headers:wh()}); if(r.ok) return (await r.json()).sha||null; }catch(e){}
   return null;
 }
 async function putFile(path,obj,message){
-  const t=getToken();
-  if(!t){ showToast('保存にはGitHubトークンが必要です（設定タブ）','#dc2626'); showTab('settings'); return false; }
-  const sha=await getSha(path,t);
+  if(!workerReady()){ showToast('Worker URLが未設定です（設定タブ）','#dc2626'); showTab('settings'); return false; }
+  const sha=await getSha(path);
   const body={message,content:b64encode(JSON.stringify(obj,null,2)+'\n')};
   if(sha) body.sha=sha;
   try{
-    const r=await fetch(api(path),{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},auth(t)),body:JSON.stringify(body)});
+    const r=await fetch(workerFile(path),{method:'PUT',headers:wh(),body:JSON.stringify(body)});
     if(!r.ok){ const e=await r.json(); showToast('保存エラー: '+(e.message||r.status),'#dc2626'); return false; }
     return true;
   }catch(e){ showToast('保存エラー: '+e.message,'#dc2626'); return false; }
@@ -452,22 +440,14 @@ async function putFile(path,obj,message){
 
 // ── AI チラシ読み取り（workflow_dispatch） ─────────
 async function triggerAiReadChirashi(){
-  const t=getToken();
-  if(!t){ showToast('この機能にはGitHubトークンが必要です（設定タブ）','#dc2626'); showTab('settings'); return; }
+  if(!workerReady()){ showToast('Worker URLが未設定です（設定タブ）','#dc2626'); showTab('settings'); return; }
   try{
-    const r=await fetch(
-      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/update-seminars.yml/dispatches`,
-      {
-        method:'POST',
-        headers:Object.assign({'Content-Type':'application/json','Accept':'application/vnd.github+json'},auth(t)),
-        body:JSON.stringify({ref:'main'})
-      }
-    );
+    const r=await fetch(`${WORKER_URL}/api/dispatch`,{method:'POST',headers:wh()});
     if(r.status===204){
-      showToast('🤖 AI読み取りを開始しました。1〜2分後に「再読み込み」を押すと反映されます','#189048');
+      showToast('🤖 AI読み取りを開始しました。1〜2分後に「再読み込み」を押すと反映されます');
     } else {
       let msg=r.status;
-      try{ const e=await r.json(); msg=(e.message||r.status); }catch(e){}
+      try{ const e=await r.json(); msg=(e.message||e.error||r.status); }catch(ee){}
       showToast('エラー: '+msg,'#dc2626');
     }
   }catch(e){ showToast('ネットワークエラー: '+e.message,'#dc2626'); }
@@ -507,8 +487,7 @@ function readFileAsBase64(file){
 
 // uploadFlyer: Promise<path> を返す
 async function uploadFlyer(file){
-  const t=getToken();
-  if(!t){ showToast('アップロードにはGitHubトークンが必要です（設定タブ）','#dc2626'); showTab('settings'); return null; }
+  if(!workerReady()){ showToast('Worker URLが未設定です（設定タブ）','#dc2626'); showTab('settings'); return null; }
 
   const isPdf=file.type==='application/pdf';
   const isImage=file.type.startsWith('image/');
@@ -542,10 +521,9 @@ async function uploadFlyer(file){
 
   try{
     const body={message:'チラシファイルをアップロード: '+filename, content:base64};
-    // 新規ファイルなのでshaは不要
-    const r=await fetch(api(path),{
+    const r=await fetch(workerFile(path),{
       method:'PUT',
-      headers:Object.assign({'Content-Type':'application/json'},auth(t)),
+      headers:wh(),
       body:JSON.stringify(body)
     });
     if(!r.ok){
@@ -612,7 +590,9 @@ async function handleFlyerEdit(id,input){
 function tryUnlock(){
   const v=document.getElementById('gatePass').value;
   if(v===(siteConfig.adminPass||'3535')){
+    sessionPass=v;
     sessionStorage.setItem('admin_unlocked','1');
+    sessionStorage.setItem('admin_pass',v);
     document.getElementById('gate').style.display='none';
     document.getElementById('app').style.display='';
     updateFab();
@@ -660,7 +640,7 @@ function saveActiveTab(){
 async function reloadSeminars(){
   const el=document.getElementById('semStatus'); el.textContent='読み込み中...'; el.className='status';
   seminars=await loadJson(SEM_FILE,[]);
-  semSha=await getSha(SEM_FILE,getToken());
+  semSha=await getSha(SEM_FILE);
   el.textContent=`${seminars.length}件`; el.className='status ok';
   renderSeminars();
 }
@@ -934,8 +914,10 @@ async function changePass(){
   if(p1!==p2){ showToast('確認用パスワードが一致しません','#dc2626'); return; }
   siteConfig.adminPass=p1;
   if(await putFile(SITE_FILE,siteConfig,'管理ページからパスワードを変更')){
+    sessionPass=p1;
+    sessionStorage.setItem('admin_pass',p1);
     document.getElementById('newPass').value=''; document.getElementById('newPass2').value='';
-    showToast('✅ パスワードを変更しました');
+    showToast('✅ パスワードを変更しました。CloudflareのADMIN_PASSシークレットも同じ値に更新してください');
   }
 }
 
@@ -991,11 +973,16 @@ function renderGoatCounter(){
 
   // ゲート（既に開錠済みならスキップ）
   if(sessionStorage.getItem('admin_unlocked')==='1'){
+    sessionPass=sessionStorage.getItem('admin_pass')||'';
     document.getElementById('gate').style.display='none';
     document.getElementById('app').style.display='';
   }else{
     document.getElementById('gatePass').focus();
   }
+
+  // Worker URL 表示
+  const wuEl=document.getElementById('workerUrlDisplay');
+  if(wuEl) wuEl.textContent='Worker URL: '+WORKER_URL;
 
   // 編集を検知して保存ボタンを「未保存」状態にする（設定タブ除く）
   const appEl=document.getElementById('app');
@@ -1004,7 +991,6 @@ function renderGoatCounter(){
   appEl.addEventListener('change',onEdit);
 
   // 各タブ描画
-  verifyToken();
   reloadSeminars();
   renderSections();
   renderStats();
