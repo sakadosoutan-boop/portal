@@ -229,7 +229,20 @@ textarea{resize:vertical;min-height:54px;}
   <div class="tabpane" id="pane-forms">
     <div class="card">
       <h2>📝 Google フォーム 埋め込み</h2>
-      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">Google フォームのURLを貼り付けると、サイト下部に埋め込み表示されます（最大2件）。</p>
+      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">Google フォームのURLを貼り付けると、サイトに埋め込み表示されます（最大2件）。</p>
+      <div class="field" style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px;">表示位置</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;">
+            <input type="radio" name="formsPos" id="fp_top" value="top" onchange="markDirty()" style="width:auto;margin:0;">
+            セミナー情報の直下（推奨）
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;">
+            <input type="radio" name="formsPos" id="fp_bottom" value="bottom" onchange="markDirty()" style="width:auto;margin:0;">
+            ページ下部
+          </label>
+        </div>
+      </div>
       <div class="section-block">
         <h3>フォーム 1</h3>
         <div class="row">
@@ -890,21 +903,27 @@ async function saveSite(label){
 
 // ════════════ Googleフォーム ════════════
 async function loadForms(){
-  const forms=await loadJson(FORMS_FILE,[]);
-  if(forms[0]){ document.getElementById('f1_title').value=forms[0].title||''; document.getElementById('f1_url').value=forms[0].url||''; }
-  if(forms[1]){ document.getElementById('f2_title').value=forms[1].title||''; document.getElementById('f2_url').value=forms[1].url||''; }
+  const raw=await loadJson(FORMS_FILE,null);
+  let items=[], pos='top';
+  if(Array.isArray(raw)){ items=raw; }
+  else if(raw && Array.isArray(raw.items)){ items=raw.items; pos=raw.position==='bottom'?'bottom':'top'; }
+  if(items[0]){ document.getElementById('f1_title').value=items[0].title||''; document.getElementById('f1_url').value=items[0].url||''; }
+  if(items[1]){ document.getElementById('f2_title').value=items[1].title||''; document.getElementById('f2_url').value=items[1].url||''; }
+  const r=document.querySelector(`input[name=formsPos][value=${pos}]`); if(r) r.checked=true;
 }
 async function saveForms(){
-  const forms=[
+  const pos=document.querySelector('input[name=formsPos]:checked')?.value||'top';
+  const items=[
     {title:document.getElementById('f1_title').value,url:document.getElementById('f1_url').value.trim()},
     {title:document.getElementById('f2_title').value,url:document.getElementById('f2_url').value.trim()}
   ].filter(f=>f.url);
-  forms.forEach(f=>{
+  items.forEach(f=>{
     if(f.url.includes('docs.google.com/forms')||f.url.includes('forms.gle')||f.url.includes('forms.google.com')){
       f.url=f.url.replace('/viewform','').replace(/\?.*$/,'')+'/viewform?embedded=true';
     }
   });
-  if(await putFile(FORMS_FILE,forms,'管理ページからフォーム設定を更新')){ clearDirty(); showToast('✅ フォームを保存しました（反映まで約1〜2分）'); }
+  const payload={position:pos,items};
+  if(await putFile(FORMS_FILE,payload,'管理ページからフォーム設定を更新')){ clearDirty(); showToast('✅ フォームを保存しました（反映まで約1〜2分）'); }
 }
 
 // ════════════ パスワード変更 ════════════

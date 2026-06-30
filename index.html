@@ -151,7 +151,7 @@ body{margin:0;}
 
       <sc-if value="{{ isCarousel }}" hint-placeholder-val="{{ true }}">
         <div>
-          <div ref="{{ trackRef }}" class="evt-track" onMouseEnter="{{ evtPause }}" onMouseLeave="{{ evtResume }}" style="display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 8px;">
+          <div ref="{{ trackRef }}" class="evt-track" onMouseEnter="{{ evtPause }}" onMouseLeave="{{ evtResume }}" onTouchStart="{{ evtTouchStart }}" onTouchEnd="{{ evtTouchEnd }}" style="display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 8px;">
             <sc-for list="{{ events }}" as="ev" hint-placeholder-count="4">
               <div onClick="{{ ev.onClick }}" onDoubleClick="{{ ev.onDblClick }}" title="クリック：チラシを開く ／ ダブルクリック：申込ページ" style="scroll-snap-align:start;flex:none;width:255px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s ease,border-color .22s ease;" style-hover="transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:{{ ev.accent }};">
                 <div style="position:relative;height:152px;background:{{ ev.posterBg }};overflow:hidden;">
@@ -260,6 +260,27 @@ body{margin:0;}
       </sc-if>
     </div>
   </section>
+
+  <sc-if value="{{ formsAtTop }}" hint-placeholder-val="{{ false }}">
+  <section id="forms" style="background:var(--surface-2);border-top:1px solid var(--border);padding:48px 24px;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <span style="width:11px;height:24px;border-radius:6px;background:var(--brand);flex:none;"></span>
+        <h2 style="font-family:var(--font-display);font-weight:700;font-size:25px;color:var(--text-strong);margin:0;letter-spacing:-.01em;">アンケート・申込フォーム</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:24px;">
+        <sc-for list="{{ formsData }}" as="form">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm);">
+            <sc-if value="{{ form.title }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px 18px 0;font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text-strong);">{{ form.title }}</div>
+            </sc-if>
+            <iframe src="{{ form.url }}" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0" style="display:block;">読み込み中…</iframe>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+  </sc-if>
 
   <a id="top"></a>
   <section style="position:relative;overflow:hidden;background:linear-gradient(140deg,#0d4926 0%,#13783b 48%,#2fa460 100%);padding:60px 24px 68px;">
@@ -492,7 +513,7 @@ body{margin:0;}
 
   </main>
 
-  <sc-if value="{{ formsVisible }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ formsAtBottom }}" hint-placeholder-val="{{ false }}">
   <section id="forms" style="background:var(--surface-2);border-top:1px solid var(--border);padding:48px 24px;">
     <div style="max-width:1200px;margin:0 auto;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
@@ -530,9 +551,10 @@ body{margin:0;}
 class Component extends DCLogic {
   constructor(props){
     super(props);
-    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], cfgVersion:0, showPast:false, evtTag:'all', calMonth:null };
+    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], formsPos:'top', cfgVersion:0, showPast:false, evtTag:'all', calMonth:null };
     this.trackRef = React.createRef();
     this._evtPaused = false;
+    this._resumeT = null;
 
     this.DATA = {
       cats:[
@@ -669,7 +691,7 @@ class Component extends DCLogic {
     }).catch(()=>{});
   }
 
-  componentWillUnmount(){ clearInterval(this._evtTimer); clearTimeout(this._clickT); clearTimeout(this._ct); }
+  componentWillUnmount(){ clearInterval(this._evtTimer); clearTimeout(this._clickT); clearTimeout(this._ct); clearTimeout(this._resumeT); }
 
   loadSeminars(){
     const fallback = (this.DATA && this.DATA.seminarsFallback) || [];
@@ -685,7 +707,11 @@ class Component extends DCLogic {
 
   loadForms(){
     fetch("project/forms-config.json").then(r=> r.ok ? r.json() : Promise.reject()).then(d=>{
-      if(Array.isArray(d) && d.length) this.setState({ formsData: d });
+      if(Array.isArray(d)){ if(d.length) this.setState({ formsData: d }); }
+      else if(d && Array.isArray(d.items)){
+        const pos = d.position === 'bottom' ? 'bottom' : 'top';
+        this.setState({ formsData: d.items, formsPos: pos });
+      }
     }).catch(()=>{});
   }
 
@@ -974,6 +1000,15 @@ class Component extends DCLogic {
       evtNext: ()=>this.advanceEvt(1,false),
       evtPause: ()=>{ this._evtPaused=true; },
       evtResume: ()=>{ this._evtPaused=false; },
+      evtTouchStart: ()=>{ this._evtPaused=true; clearTimeout(this._resumeT); },
+      evtTouchEnd: ()=>{
+        clearTimeout(this._resumeT);
+        this._resumeT = setTimeout(()=>{
+          const tr=this.trackRef.current;
+          if(tr){ const i=Math.round(tr.scrollLeft/this.stride()); const arr=this.state.evtData||[]; this.setState({evtIndex:Math.max(0,Math.min(i,arr.length-1))}); }
+          this._resumeT = setTimeout(()=>{ this._evtPaused=false; }, 2000);
+        }, 400);
+      },
 
       query: st.query,
       setQuery: (e)=>this.setState({query:e.target.value}),
@@ -1010,6 +1045,8 @@ class Component extends DCLogic {
       ,
       formsData: st.formsData,
       formsVisible: !!(st.formsData && st.formsData.length),
+      formsAtTop: !!(st.formsData && st.formsData.length && st.formsPos !== 'bottom'),
+      formsAtBottom: !!(st.formsData && st.formsData.length && st.formsPos === 'bottom'),
 
       showPast: st.showPast,
       hasPast, pastCount,
