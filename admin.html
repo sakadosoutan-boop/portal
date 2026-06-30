@@ -411,10 +411,10 @@ function softColor(hex){
 }
 
 // ── Toast ─────────────────────────────────────────
-function showToast(msg,bg='#189048'){
+function showToast(msg,bg='#189048',ms=3800){
   const el=document.getElementById('toast');
   el.textContent=msg; el.style.background=bg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),3800);
+  setTimeout(()=>el.classList.remove('show'),ms);
 }
 
 // ── Worker 接続テスト ───────────────────────────────
@@ -918,8 +918,10 @@ async function saveForms(){
     {title:document.getElementById('f2_title').value,url:document.getElementById('f2_url').value.trim()}
   ].filter(f=>f.url);
   items.forEach(f=>{
-    if(f.url.includes('docs.google.com/forms')||f.url.includes('forms.gle')||f.url.includes('forms.google.com')){
+    if(f.url.includes('docs.google.com/forms')||f.url.includes('forms.google.com')){
       f.url=f.url.replace('/viewform','').replace(/\?.*$/,'')+'/viewform?embedded=true';
+    } else if(f.url.includes('forms.gle')){
+      showToast('⚠️ forms.gle のURLは廃止されました。Google フォームの「送信」→リンクから docs.google.com で始まるURLを使用してください','#d97706',6000);
     }
   });
   const payload={position:pos,items};
