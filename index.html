@@ -811,7 +811,8 @@ class Component extends DCLogic {
     const filterActive = st.query.trim()!=='' || st.showFav;
 
     // ----- Seminars / Events -----
-    const fmtDate = (s)=>{ if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; const wd=['日','月','火','水','木','金','土'][new Date(+p[0],+p[1]-1,+p[2]).getDay()]; return (+p[1])+'/'+(+p[2])+'（'+wd+'）'; };
+    const fmtMD = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'/'+(+p[2]); };
+    const fmtDate = (ev)=>{ if(ev.dates&&ev.dates.length) return ev.dates.map(fmtMD).join('・'); if(ev.dateTo&&ev.date) return fmtMD(ev.date)+'〜'+fmtMD(ev.dateTo); const s=ev.date; if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; const wd=['日','月','火','水','木','金','土'][new Date(+p[0],+p[1]-1,+p[2]).getDay()]; return (+p[1])+'/'+(+p[2])+'（'+wd+'）'; };
     const fmtShort = (s)=>{ if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'/'+(+p[2]); };
     const daysTo = (s)=>{ if(!s) return null; const p=String(s).split('-'); if(p.length<3) return null; const d=new Date(+p[0],+p[1]-1,+p[2]); const now=new Date(); now.setHours(0,0,0,0); return Math.round((d-now)/86400000); };
     const fmtMap = { online:{label:'オンライン',c:'#4fb8e8'}, onsite:{label:'対面',c:'#ee7e66'}, hybrid:{label:'ハイブリッド',c:'#e0a800'} };
@@ -825,11 +826,13 @@ class Component extends DCLogic {
       const fm = fmtMap[ev.format] || {label:ev.format||'—',c:'#6e7363'};
       const thumb = st.evtThumbs[ev.id] || '';
       const dd = daysTo(ev.deadline);
-      const dref = ev.deadline || ev.date;
+      const evFirstDate = ev.dates ? ev.dates[0] : ev.date;
+      const evLastDate = ev.dates ? ev.dates[ev.dates.length-1] : (ev.dateTo || ev.date);
+      const dref = ev.deadline || evLastDate;
       const dnum = daysTo(dref);
       const isPast = (dnum !== null && dnum < 0);
       const isSoon = dd!==null && dd>=0 && dd<=7;
-      const calDateStr = ev.date || ev.deadline || '';
+      const calDateStr = evFirstDate || ev.deadline || '';
       const hasCalDate = !!calDateStr;
       const gcalUrl = (function(){
         if(!calDateStr) return '#';
@@ -845,7 +848,7 @@ class Component extends DCLogic {
       })();
       return {
         id:ev.id, title:ev.title||'（無題）', accent,
-        dateLabel:fmtDate(ev.date), deadlineLabel:fmtShort(ev.deadline),
+        dateLabel:fmtDate(ev), deadlineLabel:fmtShort(ev.deadline),
         organizer:ev.organizer||'—', target:ev.target||'—',
         formatLabel:fm.label, formatBadge:badgeStr(fm.c),
         thumb, hasThumb:!!thumb, noThumb:!thumb, posterBg:this.darken(accent,0.5),
@@ -936,7 +939,7 @@ class Component extends DCLogic {
       const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
       const evtByDay = {};
       evtRaw.forEach(function(ev){
-        const ds = ev.date || ev.deadline;
+        const ds = (ev.dates ? ev.dates[0] : ev.date) || ev.deadline;
         if(!ds) return;
         const p = String(ds).split('-');
         if(p.length<3) return;
