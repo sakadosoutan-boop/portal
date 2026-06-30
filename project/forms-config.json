@@ -1,10 +1,13 @@
-[
-  {
-    "title": "セミナー申し込みフォーム",
-    "url": "https://docs.google.com/forms/d/e/1FAIpQLSdgJyqR69EUcjBmNd3D-uIGsPhGFm9xXAStb_5Y2rOrP09kJQ/viewform?embedded=true"
-  },
-  {
-    "title": "総探 相談窓口",
-    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeR3h4zN3-SczWO60d6PmsbwQXngRqWWVnxonXnohiYqjopig/viewform?embedded=true"
-  }
-]
+{
+  "position": "top",
+  "items": [
+    {
+      "title": "セミナー申し込みフォーム",
+      "url": "https://docs.google.com/forms/d/1LfBpK29VjxSTOYGS36OxjWKiAx0WsZgMnROcuMG8FRA/edit/viewform?embedded=true"
+    },
+    {
+      "title": "総探 相談窓口",
+      "url": "https://docs.google.com/forms/d/1HP6600roGvMB-qrQDSXRQupsePN8zlQhVn7HQWHrJFk/edit/viewform?embedded=true"
+    }
+  ]
+}
