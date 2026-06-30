@@ -990,12 +990,14 @@ function renderGoatCounter(){
   if(!siteConfig.analytics) siteConfig.analytics={goatcounter:''};
   if(!siteConfig.notify) siteConfig.notify={enabled:false,label:'🔔 締切のお知らせを受け取る',formUrl:''};
 
-  // ゲート（既に開錠済みならスキップ）
-  if(sessionStorage.getItem('admin_unlocked')==='1'){
-    sessionPass=sessionStorage.getItem('admin_pass')||'';
+  // ゲート（admin_passが保存済みの場合のみスキップ）
+  const _savedPass=sessionStorage.getItem('admin_pass')||'';
+  if(sessionStorage.getItem('admin_unlocked')==='1' && _savedPass){
+    sessionPass=_savedPass;
     document.getElementById('gate').style.display='none';
     document.getElementById('app').style.display='';
   }else{
+    sessionStorage.removeItem('admin_unlocked');
     document.getElementById('gatePass').focus();
   }
 
