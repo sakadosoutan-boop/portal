@@ -640,6 +640,9 @@ body{margin:0;}
             お気に入りや追跡状態はこのブラウザにのみ保存されます。別のデバイスでは引き継がれません。
           </div>
         </div>
+        <sc-if value="{{ hasHelpNote }}">
+          <div style="margin-top:16px;padding:14px 16px;background:#f0fdf4;border:1px solid #86efac;border-radius:12px;font-size:13px;color:#166534;line-height:1.7;white-space:pre-wrap;">📌 先生からのメモ&#10;{{ helpNote }}</div>
+        </sc-if>
         <div style="margin-top:24px;text-align:center;">
           <button onClick="{{ helpClose }}" style="padding:10px 32px;border-radius:999px;border:none;background:var(--brand);color:#fff;font-family:var(--font-display);font-weight:700;font-size:14px;cursor:pointer;">閉じる</button>
         </div>
@@ -659,6 +662,8 @@ class Component extends DCLogic {
     this._resumeT = null;
 
     this.DATA = {
+      roadmap: [],
+      helpNote: '',
       cats:[
         {key:'all',label:'すべて'},{key:'general',label:'総探全般'},{key:'research',label:'先行研究'},
         {key:'books',label:'図書'},{key:'news',label:'新聞記事'},{key:'stats',label:'統計データ'},
@@ -762,6 +767,8 @@ class Component extends DCLogic {
       if(cfg.banner) this.DATA.banner = cfg.banner;
       this.DATA.analytics = cfg.analytics || {};
       this.DATA.notify = cfg.notify || {};
+      if(Array.isArray(cfg.roadmap) && cfg.roadmap.length) this.DATA.roadmap = cfg.roadmap;
+      if(cfg.helpNote) this.DATA.helpNote = cfg.helpNote;
       // GoatCounter動的注入（コード設定時のみ・二重注入防止）
       const gcCode = (this.DATA.analytics && this.DATA.analytics.goatcounter) || '';
       if(gcCode && !window.__gcInjected){
@@ -935,6 +942,8 @@ class Component extends DCLogic {
     // ----- Seminars / Events -----
     // ── 提出物締切バナー ⑤ ──
     const now0 = new Date(); now0.setHours(0,0,0,0);
+    const fmtMD2 = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'月'+(+p[2])+'日'; };
+    const daysTo2 = (s)=>{ if(!s) return null; const p=String(s).split('-'); if(p.length<3) return null; const d=new Date(+p[0],+p[1]-1,+p[2]); return Math.round((d-now0)/86400000); };
     const hwItems = (st.deadlines||[]).map(d=>{
       const dd2=daysTo2(d.deadline);
       return {title:d.title,detail:d.detail||'',link:d.link||'',deadline:d.deadline,daysLeft:dd2,
@@ -946,7 +955,7 @@ class Component extends DCLogic {
 
     // ── ロードマップ ② ──
     const nowM = now0.getMonth()+1;
-    const roadPhases=[
+    const defaultRoadPhases=[
       {label:'自己理解・テーマ探し',months:[4,5],icon:'🔍',desc:'自分の興味を掘り下げ、探究テーマの仮テーマを作る'},
       {label:'問いを立てる・リサーチ',months:[6,7],icon:'❓',desc:'6W2Hで問いを多角化し、先行研究を調査する'},
       {label:'実践・アクション',months:[8],icon:'🏃',desc:'夏の実践！アクションレポートを作成する'},
@@ -955,6 +964,7 @@ class Component extends DCLogic {
       {label:'中間発表・言語化',months:[12,1],icon:'📝',desc:'PR動画で中間発表。レポート・ポスター作成'},
       {label:'最終成果物',months:[2,3],icon:'🎓',desc:'最終レポートまたはスライドで探究を締めくくる'},
     ];
+    const roadPhases = (this.DATA.roadmap && this.DATA.roadmap.length) ? this.DATA.roadmap : defaultRoadPhases;
     const roadItems = roadPhases.map((ph,i)=>{
       const isCurrent = ph.months.indexOf(nowM)!==-1;
       return {label:ph.label, icon:ph.icon, desc:ph.desc, isCurrent, isCurrentTrue:isCurrent, isCurrentFalse:!isCurrent, idx:i};
@@ -971,9 +981,6 @@ class Component extends DCLogic {
     const helpClose = (function(s){ return function(){ s.setState({showHelp:false}); }; })(this);
     const helpToggle = (function(s){ return function(){ s.setState(function(prev){return {showHelp:!prev.showHelp};}); }; })(this);
     const helpStopProp = function(e){ if(e){e.stopPropagation();} };
-
-    const fmtMD2 = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'月'+(+p[2])+'日'; };
-    const daysTo2 = (s)=>{ if(!s) return null; const p=String(s).split('-'); if(p.length<3) return null; const d=new Date(+p[0],+p[1]-1,+p[2]); return Math.round((d-now0)/86400000); };
 
     const fmtMD = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'/'+(+p[2]); };
     const fmtDate = (ev)=>{ if(ev.dates&&ev.dates.length) return ev.dates.map(fmtMD).join('・'); if(ev.dateTo&&ev.date) return fmtMD(ev.date)+'〜'+fmtMD(ev.dateTo); const s=ev.date; if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; const wd=['日','月','火','水','木','金','土'][new Date(+p[0],+p[1]-1,+p[2]).getDay()]; return (+p[1])+'/'+(+p[2])+'（'+wd+'）'; };
@@ -1247,7 +1254,9 @@ class Component extends DCLogic {
       helpOpen: helpOpen,
       helpClose: helpClose,
       helpToggle: helpToggle,
-      helpStopProp: helpStopProp
+      helpStopProp: helpStopProp,
+      helpNote: this.DATA.helpNote || '',
+      hasHelpNote: !!(this.DATA.helpNote && this.DATA.helpNote.trim())
     };
   }
 }
