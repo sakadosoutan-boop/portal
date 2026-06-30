@@ -217,42 +217,42 @@
   },
   {
     "id": "s16",
-    "title": "坂戸市学生ボランティア募集",
-    "date": null,
+    "title": "こどもサマーベース2026 学生ボランティア募集",
+    "date": "2026-07-21",
     "deadline": null,
     "organizer": "坂戸市中央地域交流センター",
-    "target": null,
+    "target": "中・高・大学生",
     "format": "onsite",
     "applyUrl": "",
     "pdf": "project/seminars/up_1782776546168.pdf",
     "accent": "#2e9bd6",
-    "tags": []
+    "tags": ["ボランティア"]
   },
   {
     "id": "s17",
-    "title": "ボランティア体験プログラム",
+    "title": "彩の国ボランティア体験プログラム 2026 in 鶴ヶ島",
     "date": null,
     "deadline": "2026-07-15",
     "organizer": "鶴ヶ島市社会福祉協議会",
-    "target": null,
+    "target": "中学生以上",
     "format": "onsite",
-    "applyUrl": "",
+    "applyUrl": "https://www.volukatsu-yell.jp/11241/Taiken",
     "pdf": "project/seminars/up_1782776783298.pdf",
     "accent": "#a855f7",
-    "tags": []
+    "tags": ["ボランティア", "締切間近"]
   },
   {
     "id": "s18",
-    "title": "東松山市　夏のボランティア体験プログラム",
-    "date": null,
+    "title": "東松山市 夏のボランティア体験プログラム2026",
+    "date": "2026-07-27",
     "deadline": "2026-07-05",
     "organizer": "東松山市社会福祉協議会",
-    "target": null,
+    "target": "小・中・高・大学生",
     "format": "onsite",
     "applyUrl": "",
     "pdf": "project/seminars/up_1782776951384.pdf",
     "accent": "#f97316",
-    "tags": []
+    "tags": ["ボランティア", "締切間近"]
   },
   {
     "id": "s19",
