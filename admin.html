@@ -124,6 +124,7 @@ textarea{resize:vertical;min-height:54px;}
     <div class="tab" data-tab="news" onclick="showTab('news')">📰 新聞・アカウント</div>
     <div class="tab" data-tab="forms" onclick="showTab('forms')">📝 Googleフォーム</div>
     <div class="tab" data-tab="banner" onclick="showTab('banner')">📢 お知らせ</div>
+    <div class="tab" data-tab="deadlines" onclick="showTab('deadlines')">📋 提出物・締切</div>
     <div class="tab" data-tab="linkcheck" onclick="showTab('linkcheck')">🔍 リンク点検</div>
     <div class="tab" data-tab="settings" onclick="showTab('settings')">⚙️ 設定</div>
   </div>
@@ -310,6 +311,19 @@ textarea{resize:vertical;min-height:54px;}
     </div>
   </div>
 
+  <!-- ============ 提出物・締切 ============ -->
+  <div class="tabpane" id="pane-deadlines">
+    <div class="card">
+      <h2>📋 提出物・締切 管理</h2>
+      <p style="font-size:12.5px;color:#666;margin-bottom:14px;">生徒の提出物や締め切りを登録すると、ポータルの黄色いバナーに表示されます。締め切り当日まで表示され、翌日に自動で非表示になります。</p>
+      <div id="dl-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+      <button class="btn btn-ghost" onclick="addDeadline()">＋ 提出物を追加</button>
+    </div>
+    <div style="margin-top:12px;text-align:center;">
+      <button class="btn btn-primary" onclick="saveDeadlines()">💾 締切リストを保存</button>
+    </div>
+  </div>
+
   <!-- ============ リンク点検 ============ -->
   <div class="tabpane" id="pane-linkcheck">
     <div class="card">
@@ -376,6 +390,7 @@ const OWNER='sakadosoutan-boop', REPO='portal';
 const SITE_FILE='project/site-config.json';
 const SEM_FILE='project/seminars/seminars.json';
 const FORMS_FILE='project/forms-config.json';
+const DEADLINES_FILE='project/deadlines.json';
 // ▼ Cloudflare Worker deploy 後に実際のURLへ変更してコミット
 const WORKER_URL='https://portal-proxy.sakadosoutan.workers.dev';
 const ACCENTS=['#189048','#ee7e66','#4fb8e8','#f7b500','#2e9bd6','#a855f7','#f97316','#06b6d4','#84cc16','#ec4899'];
@@ -928,6 +943,70 @@ async function saveForms(){
   if(await putFile(FORMS_FILE,payload,'管理ページからフォーム設定を更新')){ clearDirty(); showToast('✅ フォームを保存しました（反映まで約1〜2分）'); }
 }
 
+// ════════════ 提出物・締切 ════════════
+let dlItems=[];
+
+async function loadDeadlines(){
+  const raw=await loadJson(DEADLINES_FILE,[]);
+  dlItems=Array.isArray(raw)?raw:[];
+  renderDeadlines();
+}
+
+function renderDeadlines(){
+  const wrap=document.getElementById('dl-list');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  if(!dlItems.length){
+    wrap.innerHTML='<p style="font-size:13px;color:#999;text-align:center;padding:16px 0;">登録された提出物はありません</p>';
+    return;
+  }
+  dlItems.forEach((d,i)=>{
+    const div=document.createElement('div');
+    div.className='section-block';
+    div.style.cssText='position:relative;';
+    div.innerHTML=`<div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;" class="field">
+        <label>タイトル *</label>
+        <input value="${escH(d.title||'')}" oninput="dlItems[${i}].title=this.value" placeholder="例: アンケート提出">
+      </div>
+      <div style="width:150px;" class="field">
+        <label>締切日</label>
+        <input type="date" value="${escH(d.deadline||'')}" oninput="dlItems[${i}].deadline=this.value">
+      </div>
+    </div>
+    <div class="field" style="margin-top:2px;">
+      <label>詳細・補足（任意）</label>
+      <textarea rows="2" oninput="dlItems[${i}].detail=this.value" placeholder="提出方法やメモなど">${escH(d.detail||'')}</textarea>
+    </div>
+    <div class="field" style="margin-top:2px;">
+      <label>リンク（任意）</label>
+      <input value="${escH(d.link||'')}" oninput="dlItems[${i}].link=this.value" placeholder="https://...">
+    </div>
+    <div style="text-align:right;">
+      <button class="btn btn-danger btn-sm" onclick="removeDeadline(${i})">🗑 削除</button>
+    </div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function addDeadline(){
+  const id='hw'+(Date.now());
+  dlItems.push({id,title:'',deadline:'',detail:'',link:''});
+  renderDeadlines();
+}
+
+function removeDeadline(i){
+  dlItems.splice(i,1);
+  renderDeadlines();
+}
+
+async function saveDeadlines(){
+  const valid=dlItems.filter(d=>d.title&&d.deadline);
+  if(await putFile(DEADLINES_FILE,valid,'管理ページから提出物リストを更新')){ showToast('✅ 締切リストを保存しました（反映まで約1〜2分）'); }
+}
+
+function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 // ════════════ パスワード変更 ════════════
 async function changePass(){
   const p1=document.getElementById('newPass').value, p2=document.getElementById('newPass2').value;
@@ -1022,6 +1101,7 @@ function renderGoatCounter(){
   renderNotify();
   renderGoatCounter();
   loadForms();
+  loadDeadlines();
   updateFab();
 })();
 

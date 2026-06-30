@@ -107,6 +107,50 @@ body{margin:0;}
     </div>
   </sc-if>
 
+  <!-- ⑤ 提出物・締切バナー -->
+  <sc-if value="{{ hwBannerVisible }}">
+    <div style="background:#fef3c7;border-bottom:2px solid #f59e0b;">
+      <div style="max-width:1200px;margin:0 auto;padding:10px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <span style="font-family:var(--font-display);font-weight:700;font-size:12px;color:#92400e;letter-spacing:.06em;white-space:nowrap;">📋 提出物・締切</span>
+        <sc-for list="{{ hwItems }}" as="hw">
+          <div style="display:flex;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:7px 13px;flex:1;min-width:220px;">
+            <span style="font-family:var(--font-display);font-weight:700;font-size:13px;color:#78350f;flex:1;">{{ hw.title }}</span>
+            <span style="font-family:var(--font-display);font-weight:700;font-size:12px;white-space:nowrap;padding:3px 9px;border-radius:999px;background:#ef4444;color:#fff;">{{ hw.fmtDeadline }}まで</span>
+            <span style="font-family:var(--font-display);font-weight:700;font-size:12px;white-space:nowrap;color:#dc2626;">{{ hw.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ② 探究ロードマップ -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);overflow:hidden;">
+    <div style="max-width:1200px;margin:0 auto;padding:12px 24px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;color:var(--text-faint);">ROADMAP</span>
+        <span style="font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--text-muted);">探究の年間ロードマップ</span>
+      </div>
+      <div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;">
+        <sc-for list="{{ roadItems }}" as="ph">
+          <sc-if value="{{ ph.isCurrentTrue }}">
+            <div style="flex:none;min-width:110px;padding:8px 11px;border-radius:10px;background:var(--brand);color:#fff;border:2px solid var(--brand-strong);position:relative;">
+              <div style="font-size:16px;line-height:1;">{{ ph.icon }}</div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:11px;margin-top:4px;line-height:1.35;">{{ ph.label }}</div>
+              <div style="font-size:9.5px;margin-top:3px;opacity:.85;line-height:1.4;">{{ ph.desc }}</div>
+              <div style="position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;font-family:var(--font-display);font-weight:700;font-size:9px;padding:2px 7px;border-radius:999px;white-space:nowrap;">▶ 今ここ</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ph.isCurrentFalse }}">
+            <div style="flex:none;min-width:100px;padding:7px 10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);opacity:.75;">
+              <div style="font-size:15px;line-height:1;">{{ ph.icon }}</div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:10.5px;margin-top:3px;color:var(--text-muted);line-height:1.35;">{{ ph.label }}</div>
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
   <section style="background:var(--surface-2);border-bottom:1px solid var(--border);">
     <div style="max-width:1200px;margin:0 auto;padding:22px 24px 26px;">
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
@@ -184,9 +228,13 @@ body{margin:0;}
                       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ev.organizer }}</span>
                     </div>
                   </div>
-                  <div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                    <span style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-display);font-weight:700;">{{ ev.target }}</span>
-                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:var(--font-display);font-weight:700;color:{{ ev.accent }};">申込 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></span>
+                  <div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--border);display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
+                    <span style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-display);font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ev.target }}</span>
+                    <div style="display:flex;gap:5px;align-items:center;flex:none;">
+                      <a href="{{ ev.mapUrl }}" target="_blank" rel="noopener noreferrer" onClick="{{ ev.mapStopProp }}" title="地図で探す" style="display:inline-flex;align-items:center;gap:2px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);text-decoration:none;font-size:10px;font-family:var(--font-display);font-weight:700;">🗺</a>
+                      <button onClick="{{ ev.onToggleSemFav }}" title="参加状況を記録" style="display:inline-flex;align-items:center;gap:2px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:{{ ev.semStatusColor }};font-size:10px;font-family:var(--font-display);font-weight:700;cursor:pointer;">{{ ev.semStatusLabel }}</button>
+                      <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-family:var(--font-display);font-weight:700;color:{{ ev.accent }};">申込 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -541,9 +589,63 @@ body{margin:0;}
         <p style="margin:0;font-family:var(--font-display);font-weight:700;font-size:17px;color:var(--text-strong);">まず、一次情報にあたろう。</p>
         <p style="margin:4px 0 0;font-size:12.5px;color:var(--text-muted);">総合的な探究の時間 — リサーチポータル。リンクは新しいタブで開きます。★でお気に入りを保存できます。</p>
       </div>
+      <button onClick="{{ helpToggle }}" title="使い方・ヘルプ" style="flex:none;align-self:flex-end;font-size:12px;color:var(--text-faint);cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:6px 12px;background:var(--surface);">❓ ヘルプ</button>
       <a href="admin.html" style="flex:none;align-self:flex-end;font-size:12px;color:var(--text-faint);text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;background:var(--surface);" title="先生・管理者用">⚙ 管理</a>
     </div>
   </footer>
+
+  <!-- ⑩ ヘルプモーダル -->
+  <sc-if value="{{ helpOpen }}">
+    <div onClick="{{ helpClose }}" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px;">
+      <div onClick="{{ helpStopProp }}" style="max-width:560px;width:100%;background:var(--surface);border-radius:20px;padding:32px 36px;box-shadow:0 8px 40px rgba(0,0,0,.28);max-height:90vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 style="margin:0;font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--text-strong);">❓ ヘルプ・使い方</h2>
+          <button onClick="{{ helpClose }}" style="width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;font-size:18px;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;font-size:13.5px;color:var(--text-body);line-height:1.7;">
+          <div>
+            <p style="margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-strong);">📋 セミナー・イベント情報</p>
+            <ul style="margin:0;padding-left:20px;">
+              <li><b>カードをクリック</b> → チラシ（PDF）を開く</li>
+              <li><b>ダブルクリック</b> → 申込ページを開く</li>
+              <li><b>🗺</b> ボタン → Google マップで主催者を検索</li>
+              <li><b>追跡ボタン</b>（気になる → 申込済 → 参加済）→ タップするたびに状態が変わります。ブラウザに保存されます。</li>
+              <li><b>タグ</b>（理系・文系・ボランティアなど）でフィルタできます</li>
+              <li><b>📅 登録</b> ボタンで Google カレンダーに追加できます</li>
+            </ul>
+          </div>
+          <div>
+            <p style="margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-strong);">📚 調べるツール・文献</p>
+            <ul style="margin:0;padding-left:20px;">
+              <li>★ でお気に入りに保存できます（ブラウザに保存）</li>
+              <li>各リンクは新しいタブで開きます</li>
+            </ul>
+          </div>
+          <div>
+            <p style="margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-strong);">📋 提出物・締切バナー</p>
+            <ul style="margin:0;padding-left:20px;">
+              <li>先生から指示された提出物の締め切りが黄色いバナーに表示されます</li>
+              <li>締め切りが過ぎると自動的に消えます</li>
+            </ul>
+          </div>
+          <div>
+            <p style="margin:0 0 6px;font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--text-strong);">🗺 探究ロードマップ</p>
+            <ul style="margin:0;padding-left:20px;">
+              <li>現在の月に対応するフェーズが強調表示されます</li>
+              <li>今の時期に何をすべきかの目安です</li>
+            </ul>
+          </div>
+          <div style="padding:14px;background:var(--sunken);border-radius:12px;font-size:12.5px;color:var(--text-muted);">
+            ⚙ 右下の「管理」リンクは先生・管理者専用です。パスワードが必要です。<br>
+            お気に入りや追跡状態はこのブラウザにのみ保存されます。別のデバイスでは引き継がれません。
+          </div>
+        </div>
+        <div style="margin-top:24px;text-align:center;">
+          <button onClick="{{ helpClose }}" style="padding:10px 32px;border-radius:999px;border:none;background:var(--brand);color:#fff;font-family:var(--font-display);font-weight:700;font-size:14px;cursor:pointer;">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
 
 </div>
 </x-dc>
@@ -551,7 +653,7 @@ body{margin:0;}
 class Component extends DCLogic {
   constructor(props){
     super(props);
-    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], formsPos:'top', cfgVersion:0, showPast:false, evtTag:'all', calMonth:null };
+    this.state = { query:'', activeCat:'all', showFav:false, favorites:[], theme:'light', statsView:'tabs', activeTab:'env', openGroups:{env:true,region:false,humanities:false,science:false}, copied:'', eventView:'carousel', evtIndex:0, evtData:null, evtThumbs:{}, formsData:[], formsPos:'top', cfgVersion:0, showPast:false, evtTag:'all', calMonth:null, deadlines:[], favSem:{}, showHelp:false };
     this.trackRef = React.createRef();
     this._evtPaused = false;
     this._resumeT = null;
@@ -640,11 +742,13 @@ class Component extends DCLogic {
     try{
       const f = JSON.parse(localStorage.getItem('tankyu-favorites')||'[]');
       const t = localStorage.getItem('tankyu-theme')||'light';
-      this.setState({ favorites: Array.isArray(f)?f:[], theme: (t==='dark'?'dark':'light') });
+      const fs = JSON.parse(localStorage.getItem('tankyu-favSem')||'{}');
+      this.setState({ favorites: Array.isArray(f)?f:[], theme: (t==='dark'?'dark':'light'), favSem: (fs&&typeof fs==='object')?fs:{} });
     }catch(e){}
     this.loadSiteConfig();
     this.loadSeminars();
     this.loadForms();
+    this.loadDeadlines();
     this._evtTimer = setInterval(()=>{ if(!this._evtPaused && this.state.eventView==='carousel') this.advanceEvt(1, true); }, 4200);
   }
 
@@ -714,6 +818,24 @@ class Component extends DCLogic {
       }
     }).catch(()=>{});
   }
+
+  loadDeadlines(){
+    fetch('project/deadlines.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+      if(Array.isArray(d)) this.setState({deadlines:d});
+    }).catch(()=>{});
+  }
+
+  toggleSemFav(id){
+    this.setState(s=>{
+      const m=Object.assign({},s.favSem);
+      const cur=m[id]||null;
+      if(!cur) m[id]='wish'; else if(cur==='wish') m[id]='applied'; else if(cur==='applied') m[id]='attended'; else delete m[id];
+      try{localStorage.setItem('tankyu-favSem',JSON.stringify(m));}catch(e){}
+      return {favSem:m};
+    });
+  }
+
+  toggleHelp(){ this.setState(s=>({showHelp:!s.showHelp})); }
 
   renderThumbs(arr){
     const lib = window.pdfjsLib;
@@ -811,6 +933,48 @@ class Component extends DCLogic {
     const filterActive = st.query.trim()!=='' || st.showFav;
 
     // ----- Seminars / Events -----
+    // ── 提出物締切バナー ⑤ ──
+    const now0 = new Date(); now0.setHours(0,0,0,0);
+    const hwItems = (st.deadlines||[]).map(d=>{
+      const dd2=daysTo2(d.deadline);
+      return {title:d.title,detail:d.detail||'',link:d.link||'',deadline:d.deadline,daysLeft:dd2,
+        urgent: dd2!==null && dd2>=0 && dd2<=7, past: dd2!==null && dd2<0,
+        label: dd2===null?'':dd2===0?'本日締切！':dd2>0?('あと'+dd2+'日'):'提出済み',
+        fmtDeadline: fmtMD2(d.deadline)};
+    }).filter(d=>!d.past);
+    const hwBannerVisible = hwItems.length>0;
+
+    // ── ロードマップ ② ──
+    const nowM = now0.getMonth()+1;
+    const roadPhases=[
+      {label:'自己理解・テーマ探し',months:[4,5],icon:'🔍',desc:'自分の興味を掘り下げ、探究テーマの仮テーマを作る'},
+      {label:'問いを立てる・リサーチ',months:[6,7],icon:'❓',desc:'6W2Hで問いを多角化し、先行研究を調査する'},
+      {label:'実践・アクション',months:[8],icon:'🏃',desc:'夏の実践！アクションレポートを作成する'},
+      {label:'発表・フィードバック',months:[9],icon:'📣',desc:'面談と発表で探究をブラッシュアップ'},
+      {label:'研究・修正',months:[10,11],icon:'🔬',desc:'探究の問いを正式決定し、実証・調査を深める'},
+      {label:'中間発表・言語化',months:[12,1],icon:'📝',desc:'PR動画で中間発表。レポート・ポスター作成'},
+      {label:'最終成果物',months:[2,3],icon:'🎓',desc:'最終レポートまたはスライドで探究を締めくくる'},
+    ];
+    const roadItems = roadPhases.map((ph,i)=>{
+      const isCurrent = ph.months.indexOf(nowM)!==-1;
+      return {label:ph.label, icon:ph.icon, desc:ph.desc, isCurrent, isCurrentTrue:isCurrent, isCurrentFalse:!isCurrent, idx:i};
+    });
+
+    // ── セミナー進捗トラッカー ⑨ ──
+    const favSem2 = st.favSem||{};
+    const semTrackerLabels={'wish':'気になる','applied':'申込済','attended':'参加済'};
+    const semTrackerColors={'wish':'#f97316','applied':'#3b82f6','attended':'#22c55e'};
+    const selfComp = this;
+
+    // ── ヘルプモーダル ⑩ ──
+    const helpOpen = !!st.showHelp;
+    const helpClose = (function(s){ return function(){ s.setState({showHelp:false}); }; })(this);
+    const helpToggle = (function(s){ return function(){ s.setState(function(prev){return {showHelp:!prev.showHelp};}); }; })(this);
+    const helpStopProp = function(e){ if(e){e.stopPropagation();} };
+
+    const fmtMD2 = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'月'+(+p[2])+'日'; };
+    const daysTo2 = (s)=>{ if(!s) return null; const p=String(s).split('-'); if(p.length<3) return null; const d=new Date(+p[0],+p[1]-1,+p[2]); return Math.round((d-now0)/86400000); };
+
     const fmtMD = (s)=>{ if(!s) return ''; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'/'+(+p[2]); };
     const fmtDate = (ev)=>{ if(ev.dates&&ev.dates.length) return ev.dates.map(fmtMD).join('・'); if(ev.dateTo&&ev.date) return fmtMD(ev.date)+'〜'+fmtMD(ev.dateTo); const s=ev.date; if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; const wd=['日','月','火','水','木','金','土'][new Date(+p[0],+p[1]-1,+p[2]).getDay()]; return (+p[1])+'/'+(+p[2])+'（'+wd+'）'; };
     const fmtShort = (s)=>{ if(!s) return '未定'; const p=String(s).split('-'); if(p.length<3) return s; return (+p[1])+'/'+(+p[2]); };
@@ -858,7 +1022,15 @@ class Component extends DCLogic {
         tags: ev.tags || [],
         applyUrl:ev.applyUrl||'#', pdfHref:ev.pdf||ev.applyUrl||'#',
         onClick:openClick(ev), onDblClick:openDbl(ev),
-        hasCalDate, gcalUrl, calDateStr
+        hasCalDate, gcalUrl, calDateStr,
+        semStatus: favSem2[ev.id]||null,
+        semStatusLabel: semTrackerLabels[favSem2[ev.id]]||'追跡',
+        semStatusColor: semTrackerColors[favSem2[ev.id]]||'var(--text-faint)',
+        semHasStatus: !!(favSem2[ev.id]),
+        semNoStatus: !(favSem2[ev.id]),
+        onToggleSemFav: (function(id){ return function(e){ if(e){e.stopPropagation();e.preventDefault();} selfComp.toggleSemFav(id); }; })(ev.id),
+        mapUrl: 'https://maps.google.com/maps?q='+encodeURIComponent(ev.organizer||ev.title||''),
+        mapStopProp: function(e){ if(e){e.stopPropagation();} }
       };
     });
     const pastCount = evtAll.filter(ev=>ev.isPast).length;
@@ -1065,7 +1237,17 @@ class Component extends DCLogic {
 
       notifyVisible: !!((() => { const n=this.DATA.notify||{}; return n.enabled && n.formUrl; })()),
       notifyLabel: (this.DATA.notify && this.DATA.notify.label) || '🔔 締切のお知らせを受け取る',
-      notifyUrl: (this.DATA.notify && this.DATA.notify.formUrl) || '#'
+      notifyUrl: (this.DATA.notify && this.DATA.notify.formUrl) || '#',
+
+      hwBannerVisible: hwBannerVisible,
+      hwItems: hwItems,
+
+      roadItems: roadItems,
+
+      helpOpen: helpOpen,
+      helpClose: helpClose,
+      helpToggle: helpToggle,
+      helpStopProp: helpStopProp
     };
   }
 }
