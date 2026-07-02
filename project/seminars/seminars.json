@@ -303,5 +303,31 @@
     "tags": [
       "ボランティア"
     ]
+  },
+  {
+    "id": "s21",
+    "title": "サイエンスカフェ 高校生VS水族館",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": null,
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "project/seminars/up_1782959041571.jpg",
+    "accent": "#ec4899",
+    "tags": []
+  },
+  {
+    "id": "s22",
+    "title": "AIと私の未来予想図",
+    "date": null,
+    "deadline": null,
+    "organizer": null,
+    "target": null,
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "project/seminars/up_1782959118049.jpg",
+    "accent": "#189048",
+    "tags": []
   }
 ]
