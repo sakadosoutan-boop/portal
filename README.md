@@ -1,25 +1,19 @@
-# CODING AGENTS: READ THIS FIRST
+# 探究学習ポータル（portal）
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+高校生向け「探究学習ポータル」の本番リポジトリ（正本）。
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+## 構成
 
-## What you should do — IMPORTANT
+- `index.html` — 公開ページ本体
+- `admin.html` — 管理ページ（Cloudflare Worker 経由で本リポジトリへコミットし、内容を更新する）
+- `cloudflare-worker.js` — 管理ページ→GitHub の中継プロキシのソース
+- `project/` — 稼働データと本番参照アセット（`seminars/`、`site-config.json`、`deadlines.json`、`forms-config.json`、`assets/fonts/`、`support.js`）
+- `scripts/update_seminars.py` — チラシ（PDF/画像）から `seminars.json` を自動生成（GitHub Actions: `update-seminars.yml`、Gemini API 使用）
+- `docs/design-handoff/` — 初期設計（claude.ai/design）ハンドオフのアーカイブ（本番では未使用）
 
-**Read the chat transcripts first.** There are 2 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+## 運用ルール
 
-**Read `project/index.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
-
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
-
-## About the design files
-
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
-
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
-
-## Bundle contents
-
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `高校生向け探究学習ポータル` project files (HTML prototypes, assets, components)
+- `project/seminars/seminars.json` と `scripts/.seminars_cache.json` は自動生成物。手編集しない。
+- セミナーの追加は管理ページから行うか、チラシ画像/PDF を `project/seminars/` へ push する（Actions が自動反映）。
+- 「管理ページからセミナーを更新」系のコミットは bot 運用によるもので正常。
+- 編集ガイドの詳細は `CLAUDE.md` を参照。
