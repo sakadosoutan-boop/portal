@@ -20,7 +20,7 @@
 - 「管理ページからセミナーを更新」等のコミットは bot 運用による正常な挙動。
 
 ## 公開URL
-未特定・要確認。site-config.json やコード内に公開URL/独自ドメインの記載なし（静的サイトのため GitHub Pages `https://sakadosoutan-boop.github.io/portal/` の可能性が高いが未確認）。admin.html の `WORKER_URL=https://portal-proxy.sakadosoutan.workers.dev` は管理用プロキシで公開URLではない。
+`https://sakadosoutan-boop.github.io/portal/`（クラシックGitHub Pages。main への push ごとに「pages build and deployment」が自動実行される。2026-07-12 に Actions 実行履歴で確認済み）。admin.html の `WORKER_URL=https://portal-proxy.sakadosoutan.workers.dev` は管理用プロキシで公開URLではない。
 
 ## モデル/トークン運用（標準指示）
 - オーケストレーター本体のトークン消費を抑えるため、次を標準とする:
