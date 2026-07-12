@@ -374,14 +374,7 @@ textarea{resize:vertical;min-height:54px;}
     </div>
     <div class="card">
       <h2>🔑 管理パスワードの変更</h2>
-      <p style="font-size:12.5px;color:#666;margin-bottom:12px;">この管理ページを開くためのパスワードです（初期値: 3535）。変更後は、CloudflareダッシュボードのWorkerシークレット <code>ADMIN_PASS</code> も同じ値に更新してください。</p>
-      <div class="row">
-        <div class="field"><label>新しいパスワード</label><input id="newPass" placeholder="新しいパスワード"></div>
-        <div class="field"><label>確認のためもう一度</label><input id="newPass2" placeholder="もう一度入力"></div>
-      </div>
-      <div style="text-align:right;">
-        <button class="btn btn-primary" onclick="changePass()">🔑 パスワードを変更して保存</button>
-      </div>
+      <p style="font-size:12.5px;color:#666;margin-bottom:12px;">パスワードの正本は Cloudflare Worker のシークレット <code>ADMIN_PASS</code> です（安全のため公開ファイルには保存されません）。変更手順: Cloudflareダッシュボード → Workers &amp; Pages → portal-proxy → Settings → Variables and Secrets → <code>ADMIN_PASS</code> を新しい値に更新して保存。次回のログインから新しいパスワードが有効になります。詳細は <code>SECURITY.md</code> を参照。</p>
     </div>
     <div class="card">
       <h2>📊 アクセス解析（GoatCounter）</h2>
@@ -427,7 +420,7 @@ const ACCENTS=['#189048','#ee7e66','#4fb8e8','#f7b500','#2e9bd6','#a855f7','#f97
 const FMT_LABEL={online:'オンライン',onsite:'対面',hybrid:'ハイブリッド'};
 const FMT_CLASS={online:'badge-online',onsite:'badge-onsite',hybrid:'badge-hybrid'};
 
-let siteConfig={adminPass:'3535',sections:[],statsTop:[],statsGroups:[],asahi:{}};
+let siteConfig={sections:[],statsTop:[],statsGroups:[],asahi:{}};
 let seminars=[];
 let sessionPass='';
 let semSha=null;
@@ -645,18 +638,32 @@ async function handleFlyerEdit(id,input){
 }
 
 // ── パスワードゲート ───────────────────────────────
-function tryUnlock(){
+// パスワードの正本は Cloudflare Worker のシークレット ADMIN_PASS。
+// 公開ファイルには保存せず、Workerへの照合リクエスト(200/401)で判定する。
+async function tryUnlock(){
   const v=document.getElementById('gatePass').value;
-  if(v===(siteConfig.adminPass||'3535')){
-    sessionPass=v;
-    sessionStorage.setItem('admin_unlocked','1');
-    sessionStorage.setItem('admin_pass',v);
-    document.getElementById('gate').style.display='none';
-    document.getElementById('app').style.display='';
-    updateFab();
-  }else{
-    document.getElementById('gateErr').textContent='パスワードが違います';
-    document.getElementById('gatePass').value='';
+  const err=document.getElementById('gateErr');
+  if(!v){ err.textContent='パスワードを入力してください'; return; }
+  if(!workerReady()){ err.textContent='Worker URLが未設定のため照合できません'; return; }
+  err.textContent='照合中...';
+  try{
+    const r=await fetch(`${WORKER_URL}/api/check`,{headers:{'X-Admin-Pass':v}});
+    if(r.ok){
+      sessionPass=v;
+      sessionStorage.setItem('admin_unlocked','1');
+      sessionStorage.setItem('admin_pass',v);
+      document.getElementById('gate').style.display='none';
+      document.getElementById('app').style.display='';
+      updateFab();
+      err.textContent='';
+    }else if(r.status===401){
+      err.textContent='パスワードが違います';
+      document.getElementById('gatePass').value='';
+    }else{
+      err.textContent='Workerエラー('+r.status+')。接続を確認してください';
+    }
+  }catch(e){
+    err.textContent='接続エラー。ネットワークまたはWorker URLを確認してください';
   }
 }
 
@@ -1080,18 +1087,8 @@ async function saveRoadmapHelp(){
 }
 
 // ════════════ パスワード変更 ════════════
-async function changePass(){
-  const p1=document.getElementById('newPass').value, p2=document.getElementById('newPass2').value;
-  if(!p1){ showToast('新しいパスワードを入力してください','#dc2626'); return; }
-  if(p1!==p2){ showToast('確認用パスワードが一致しません','#dc2626'); return; }
-  siteConfig.adminPass=p1;
-  if(await putFile(SITE_FILE,siteConfig,'管理ページからパスワードを変更')){
-    sessionPass=p1;
-    sessionStorage.setItem('admin_pass',p1);
-    document.getElementById('newPass').value=''; document.getElementById('newPass2').value='';
-    showToast('✅ パスワードを変更しました。CloudflareのADMIN_PASSシークレットも同じ値に更新してください');
-  }
-}
+// パスワード変更は Cloudflare ダッシュボードの ADMIN_PASS シークレット更新で行う
+// （公開リポジトリの site-config.json には保存しない）。手順は SECURITY.md 参照。
 
 // ════════════ お知らせバナー ════════════
 function renderBanner(){
@@ -1133,8 +1130,8 @@ function renderGoatCounter(){
 // ════════════ 初期化 ════════════
 (async function init(){
   // 設定ファイルは公開なのでトークン無しで読める
-  siteConfig=await loadJson(SITE_FILE,{adminPass:'3535',sections:[],statsTop:[],statsGroups:[],asahi:{}});
-  if(!siteConfig.adminPass) siteConfig.adminPass='3535';
+  siteConfig=await loadJson(SITE_FILE,{sections:[],statsTop:[],statsGroups:[],asahi:{}});
+  delete siteConfig.adminPass; // 旧形式の残置キーを保存時に持ち越さない
   if(!Array.isArray(siteConfig.sections)) siteConfig.sections=[];
   if(!Array.isArray(siteConfig.statsTop)) siteConfig.statsTop=[];
   if(!Array.isArray(siteConfig.statsGroups)) siteConfig.statsGroups=[];
