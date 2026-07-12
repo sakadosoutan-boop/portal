@@ -2,6 +2,8 @@
 
 高校生向け「探究学習ポータル」の本番リポジトリ（正本）。
 
+- 公開URL: https://sakadosoutan-boop.github.io/portal/ （main への push で自動デプロイ）
+
 ## 構成
 
 - `index.html` — 公開ページ本体
