@@ -13,6 +13,7 @@
 - `project/seminars/` … セミナーのチラシ原本と `seminars.json`（稼働データ）。
 - `project/support.js` … 公開ページが読み込む共有スクリプト（本番依存）。
 - `docs/design-handoff/` … claude.ai/design 設計ハンドオフのアーカイブ（本番と無関係）。
+- `SECURITY.md` … 認証設計と運用手順（パスワード変更・トークン最小権限・事故対応）。**管理パスワードはWorkerシークレットが唯一の正本。リポジトリ内ファイルに書かない。**
 
 ## 絶対ルール
 - `project/seminars/seminars.json` と `scripts/.seminars_cache.json` は自動生成物。手編集禁止。

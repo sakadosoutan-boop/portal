@@ -4,14 +4,17 @@
 // 1. https://dash.cloudflare.com → Workers & Pages → 「Create」→ Worker を作成
 // 2. このファイルの内容をコードエディタに貼り付けて「Deploy」
 // 3. Worker の Settings → Variables & Secrets → 以下の2つのシークレットを追加:
-//      GH_TOKEN   : GitHubのPersonal Access Token（repoスコープ必要）
-//      ADMIN_PASS : 管理ページのパスワード（例: 3535）
+//      GH_TOKEN   : GitHubのPersonal Access Token
+//                   （Fine-grained PAT を推奨: 対象リポジトリを portal のみに限定し、
+//                     Contents: Read and write / Actions: Read and write を付与）
+//      ADMIN_PASS : 管理ページのパスワード（このシークレットが唯一の正本。
+//                   リポジトリ内のファイルには絶対に書かない）
 // 4. Worker の URL（例: https://portal-proxy.xxx.workers.dev）をコピー
 // 5. admin.html 冒頭の WORKER_URL をそのURLに書き換えてコミット・プッシュ
 //
 // 【パスワード変更時】
-// 管理ページの「設定 → パスワード変更」で保存後、
-// CloudflareダッシュボードのADMIN_PASSシークレットも同じ値に更新してください。
+// Cloudflareダッシュボードで ADMIN_PASS シークレットを新しい値に更新するだけ。
+// （管理ページ側の変更は不要。次回ログインから新パスワードが有効。詳細: SECURITY.md）
 
 const OWNER = 'sakadosoutan-boop';
 const REPO  = 'portal';
