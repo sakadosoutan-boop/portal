@@ -329,5 +329,20 @@
     "pdf": "project/seminars/up_1782959118049.jpg",
     "accent": "#189048",
     "tags": []
+  },
+  {
+    "id": "s23",
+    "title": "明るい未来を創る　サイエンスに出会う！",
+    "date": "2026-09-27",
+    "deadline": null,
+    "organizer": "東京科学大学",
+    "target": "中高生・保護者",
+    "format": "onsite",
+    "applyUrl": "",
+    "pdf": "project/seminars/up_1784019622481.pdf",
+    "accent": "#ee7e66",
+    "tags": [
+      "理系"
+    ]
   }
 ]
