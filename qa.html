@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+<title>探究お悩みQ&amp;A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@700;900&display=swap">
+<style>
+/* Layout: 検索＋絞り込みを上に固定し、悩みをカテゴリ順の開閉カードで並べる一列レイアウト（タブレット縦持ち想定） */
+:root{
+  --bg:#f5f8f4; --surface:#ffffff; --fg:#1c2a21; --muted:#5b6b60; --rule:#d9e3da;
+  --accent:#189048; --accent-soft:#e3f4e9; --accent-ink:#0f6b34;
+  --blue:#1f7fb8; --blue-soft:#e0f0fa; --amber:#9a7200; --amber-soft:#fbf0c9;
+  --rose:#b5476a; --rose-soft:#fbe6ee; --violet:#6b55b0; --violet-soft:#ece7f9;
+  --now:#e8590c; --now-soft:#fff0e6;
+  --f-display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121915; --surface:#1a231d; --fg:#e4ece6; --muted:#9fb0a4; --rule:#2c3a31;
+  --accent:#3cbf72; --accent-soft:#1d3427; --accent-ink:#7fdca4;
+  --blue:#6ab8e6; --blue-soft:#18303f; --amber:#e2bd4f; --amber-soft:#352c12;
+  --rose:#e98aa8; --rose-soft:#3a1f2a; --violet:#b3a3ec; --violet-soft:#2a2440;
+  --now:#ff9a5c; --now-soft:#3a2416; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121915; --surface:#1a231d; --fg:#e4ece6; --muted:#9fb0a4; --rule:#2c3a31;
+  --accent:#3cbf72; --accent-soft:#1d3427; --accent-ink:#7fdca4;
+  --blue:#6ab8e6; --blue-soft:#18303f; --amber:#e2bd4f; --amber-soft:#352c12;
+  --rose:#e98aa8; --rose-soft:#3a1f2a; --violet:#b3a3ec; --violet-soft:#2a2440;
+  --now:#ff9a5c; --now-soft:#3a2416; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.75;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:820px;margin:0 auto}
+a{color:var(--accent-ink)}
+header{padding-block:32px 8px;display:grid;gap:10px}
+.kicker{font-size:12px;letter-spacing:.14em;color:var(--accent-ink);font-weight:700}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(28px,6vw,42px);line-height:1.25;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.lead{margin:0;color:var(--muted);max-width:40em}
+.rule-box{display:flex;gap:12px;align-items:flex-start;background:var(--accent-soft);border-radius:14px;padding:14px 16px;margin-top:6px}
+.rule-box b{font-family:var(--f-display);color:var(--accent-ink);white-space:nowrap}
+.rule-box p{margin:0;font-size:14.5px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;border-bottom:1px solid var(--rule);display:grid;gap:10px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--rule);border-radius:999px;padding:4px 6px 4px 16px}
+.search:focus-within{border-color:var(--accent)}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;color:var(--fg);padding:8px 0;outline:none}
+.search button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:6px 10px;border-radius:999px;cursor:pointer}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chip{flex:none;border:1.5px solid var(--rule);background:var(--surface);color:var(--fg);font:inherit;font-size:13.5px;padding:5px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.now{border-color:var(--now);color:var(--now)}
+.chip.now[aria-pressed="true"]{background:var(--now);border-color:var(--now);color:#fff}
+.chip:focus-visible,.q summary:focus-visible,.res a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.count{font-size:13px;color:var(--muted)}
+
+.road{margin-block:22px 4px;display:grid;gap:8px}
+.road h2{font-size:13px;letter-spacing:.12em;color:var(--muted);margin:0;font-weight:700}
+.steps{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+.step{flex:1 0 92px;padding:8px 8px 9px;border-radius:10px;background:var(--surface);border:1px solid var(--rule);font-size:12px;line-height:1.4;color:var(--muted)}
+.step b{display:block;font-size:12.5px;color:var(--fg)}
+.step.cur{background:var(--now-soft);border-color:var(--now);color:var(--now)}
+.step.cur b{color:var(--now)}
+.step .m{font-variant-numeric:tabular-nums}
+
+.group{margin-top:30px}
+.group h2{font-family:var(--f-display);font-size:20px;margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
+.group h2 small{font-family:var(--f-body);font-size:13px;color:var(--muted);font-weight:500}
+.list{display:grid;gap:10px}
+.q{background:var(--surface);border:1px solid var(--rule);border-radius:16px}
+.q[open]{border-color:var(--accent)}
+.q summary{list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;border-radius:16px}
+.q summary::-webkit-details-marker{display:none}
+.qmark{font-family:var(--f-display);font-weight:900;font-size:20px;line-height:1.3;color:var(--accent)}
+.qtext{min-width:0;font-weight:700;font-size:16.5px;line-height:1.55}
+.qtext .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11.5px;font-weight:500;padding:1px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.tag.now{background:var(--now-soft);color:var(--now)}
+.chev{color:var(--muted);transition:transform .2s;margin-top:2px}
+.q[open] .chev{transform:rotate(180deg)}
+.ans{padding:0 18px 18px 50px;display:grid;gap:14px}
+.short{margin:0;padding:12px 14px;border-radius:12px;background:var(--accent-soft);font-weight:500}
+.short::before{content:"A. ";font-family:var(--f-display);font-weight:900;color:var(--accent)}
+.ans ol{margin:0;padding-left:1.3em;display:grid;gap:4px}
+.ans h3{font-size:12.5px;letter-spacing:.1em;color:var(--muted);margin:0 0 6px;font-weight:700}
+.res{display:grid;gap:8px}
+.res a{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-decoration:none;color:var(--fg);padding:10px 12px;border-radius:12px;border:1px solid var(--rule);background:var(--bg)}
+.res a:hover{border-color:var(--accent)}
+.res .nm{font-weight:700;min-width:0}
+.res .where{font-size:11.5px;padding:1px 8px;border-radius:6px;align-self:start;white-space:nowrap}
+.res .ds{grid-column:1/-1;font-size:13.5px;color:var(--muted);line-height:1.6}
+.w-general{background:var(--accent-soft);color:var(--accent-ink)}
+.w-research{background:var(--blue-soft);color:var(--blue)}
+.w-books{background:var(--amber-soft);color:var(--amber)}
+.w-news{background:var(--rose-soft);color:var(--rose)}
+.w-stats{background:var(--violet-soft);color:var(--violet)}
+.w-portal{background:var(--now-soft);color:var(--now)}
+.tip{margin:0;font-size:14px;color:var(--muted);border-top:1px dashed var(--rule);padding-top:10px}
+.tip b{color:var(--fg)}
+.empty{padding:40px 0;text-align:center;color:var(--muted)}
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);display:grid;gap:12px;font-size:14px;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.cta a{display:inline-block;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:999px;background:var(--accent);color:#fff}
+.cta a.ghost{background:transparent;color:var(--accent-ink);border:1.5px solid var(--accent)}
+@media (max-width:520px){.ans{padding-left:18px}.q summary{padding:14px}}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="kicker">総合的な探究の時間 ・ 探究リサーチポータル活用ガイド</div>
+  <h1>探究お悩み<span>Q&amp;A</span></h1>
+  <p class="lead">「テーマが決まらない」「根拠になるデータがない」。よくある悩みごとに、ポータルのどのリンクを使えば解決できるかをまとめました。気になる質問をタップしてください。</p>
+  <div class="rule-box"><b>大原則</b><p>Google検索のまとめサイト・ブログ・Wikipediaに飛びつかない。本・論文・新聞・統計といった一次情報にあたることが探究の出発点です。</p></div>
+</header>
+
+<section class="road" aria-label="年間ロードマップ">
+  <h2>いまの時期（ポータルのロードマップと同じ区切り）</h2>
+  <div class="steps" id="steps"></div>
+</section>
+
+<div class="bar">
+  <label class="search" for="q">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="例：統計、本、テーマ、スライド" autocomplete="off">
+    <button type="button" id="clear" hidden>クリア</button>
+  </label>
+  <div class="chips" id="chips" role="toolbar" aria-label="絞り込み"></div>
+  <div class="count" id="count"></div>
+</div>
+
+<main id="main"></main>
+
+<footer>
+  <div class="cta">
+    <a href="https://sakadosoutan-boop.github.io/portal/" target="_blank" rel="noopener">探究リサーチポータルを開く</a>
+    <a class="ghost" href="https://docs.google.com/forms/d/e/1FAIpQLSd7_x2LAUplR_5Iutvxevq1wSs18tWOZMnG5TAjOZ6h7I0z5g/viewform" target="_blank" rel="noopener">総探 相談窓口（フォーム）</a>
+  </div>
+  <p style="margin:0">ここに載っていない悩みは、相談窓口フォームか担当の先生へ。リンク先の内容や利用条件は各サイトで確認してください。</p>
+</footer>
+</div>
+
+<script>
+const P = "https://sakadosoutan-boop.github.io/portal/";
+const W = { general:"総探全般", research:"先行研究", books:"図書", news:"新聞記事", stats:"統計データ", portal:"ポータル機能", themes:"テーマ例", design:"デザイン作成" };
+const WC = { general:"w-general", research:"w-research", books:"w-books", news:"w-news", stats:"w-stats", portal:"w-portal", themes:"w-general", design:"w-general" };
+const R = {
+  mext:["「総合的な学習（探究）の時間」応援団","https://www.mext.go.jp/a_menu/shotou/sougou/syokatsu.htm","general","文部科学省。資料が膨大なので、ページ内検索でキーワードを入れて使う。"],
+  nhkk:["NHK高校講座 総合的な探究の時間","https://www.nhk.or.jp/kokokoza/tanq/","general","問いの立て方・調べ方・まとめ方を短い動画で確認できる。"],
+  fet:["探究学習「情報の収集／整理・分析」リンク集","https://www.blog.studyvalley.jp/2021/08/26/link/","general","情報収集・整理分析に使えるサイトのまとめ。"],
+  gaku:["学・SAITAMAリサーチデータブック","https://gaku-saitama.jp/","general","埼玉を学ぶための探究ポータル。地域テーマの入口に。"],
+  cinii:["CiNii Research","https://cir.nii.ac.jp/","research","日本最大級の論文検索。まずはここでキーワード検索。"],
+  jstage:["J-STAGE","https://www.jstage.jst.go.jp/browse/-char/ja/","research","学会誌の論文を無料で本文まで読めるものが多い。"],
+  scholar:["Google Scholar","https://scholar.google.co.jp/schhp?hl=ja","research","英語の論文も探せる。「被引用数」が多い論文は重要なものが多い。"],
+  ndl:["国立国会図書館サーチ（NDLサーチ）","https://ndlopac.ndl.go.jp/","research","全国の図書館・研究機関の本や資料をまとめて検索。"],
+  rnavi:["リサーチ・ナビ","https://rnavi.ndl.go.jp/rnavi/","research","テーマ別の「調べ方案内」。何から調べればよいかがわかる。"],
+  ndldc:["国立国会図書館デジタルコレクション","http://dl.ndl.go.jp/","research","古い本・雑誌をデジタル画像で読める。"],
+  irdb:["IRDB 学術機関リポジトリ","https://irdb.nii.ac.jp/","research","大学の紀要や卒業研究に近い論文も見つかる。"],
+  newspicks:["NewsPicks","https://newspicks.com/","research","時事・経済のニュースや対談動画。IDはStアカウント、パスワードは個別割り当て。"],
+  calil:["カーリル","https://calil.jp/","books","近くの図書館に本があるか、いま借りられるかを一度に調べられる。"],
+  webcat:["Webcat Plus","http://webcatplus.nii.ac.jp/","books","本の検索と、文章からの連想検索。"],
+  imagine:["想・IMAGINE","http://imagine.bookmap.info/index.jsp","books","単語や文章を入れると関連する本や資料を連想して探してくれる。"],
+  kosho:["日本の古本屋","https://www.kosho.or.jp/","books","絶版の本・古い本を探せる。"],
+  gbooks:["Google ブックス","https://books.google.co.jp/","books","本文の一部を検索・試し読み。借りる前の中身チェックに。"],
+  aozora:["青空文庫","https://www.aozora.gr.jp/","books","著作権が切れた文学作品を全文で読める。"],
+  library:["みんなの探究ライブラリ","https://www.benesse.co.jp/tankyu/event/library/index.html","themes","高校生の探究テーマの実例集。"],
+  junten:["高等部1年生 発表テーマ一覧（PDF）","https://www.junten.ed.jp/contents/wp-content/uploads/2022/03/b700dbb307a29fd6e8106d7ced03493d.pdf","themes","他校の実際の発表テーマ一覧。"],
+  tsutawaru:["伝わるデザイン","https://student.tsutawarudesign.com/","design","スライド・ポスターの文字、配置、色の基本。"],
+  irasuto:["いらすとや","https://www.irasutoya.com/","design","発表資料に使えるイラスト。使う前に利用規約を確認。"],
+  color:["Adobe Color","https://color.adobe.com/ja/create","design","まとまりのある配色を作れる。"],
+  asahi:["朝日けんさくくん","https://kensaku.asahi.com/","news","朝日新聞の過去記事データベース。ID・パスワードはポータルの「新聞記事」欄に掲載。"],
+  estat:["e-Stat 政府統計の総合窓口","https://www.e-stat.go.jp/","stats","人口・家計・労働など国の統計の入口。"],
+  resas:["RESAS 地域経済分析システム","https://resas.go.jp/","stats","市町村ごとの人口・産業・観光などをグラフや地図で見られる。"],
+  dash:["統計ダッシュボード","https://dashboard.e-stat.go.jp/","stats","主要な統計がはじめからグラフになっている。数字の推移をつかむのに便利。"],
+  jstat:["jSTAT MAP","https://jstatmap.e-stat.go.jp/","stats","統計を地図に色分けして表示。地域の比較に。"],
+  jma:["気象庁 過去の気象データ検索","https://www.data.jma.go.jp/obd/stats/etrn/","stats","地点・年月ごとの気温や降水量の実測値。"],
+  sdgsnhk:["SDGs17の目標別動画クリップ（NHK for School）","https://www.nhk.or.jp/school/17goals/","stats","目標ごとの短い動画。テーマの全体像をつかむのに。"],
+  jica:["SDGsを学べる教材（JICA）","https://www.jica.go.jp/cooperation/learn/material/sdgs.html","stats","途上国の現状や国際協力の事例。"],
+  nhkchiiki:["NHK地域づくりアーカイブス","https://www.nhk.or.jp/chiiki/","stats","全国の地域づくりの事例を動画で見られる。"],
+  nhkl:["NHKラーニング","https://www.nhk.or.jp/learning/","stats","幅広い分野の学習動画。"],
+  bccwj:["現代日本語書き言葉均衡コーパス（BCCWJ）","https://clrd.ninjal.ac.jp/bccwj/","stats","実際の文章で言葉がどう使われているかを検索。「少納言」は登録不要。"],
+  youkai:["怪異・妖怪伝承データベース（日文研）","https://www.nichibun.ac.jp/YoukaiDB/","stats","全国の妖怪・怪異の伝承を地域や名前で検索。"],
+  kokugo:["雑誌『国語学』全文データベース","https://bibdb.ninjal.ac.jp/SJL/","stats","日本語研究の論文を全文で読める。"],
+  egov:["e-Gov","https://www.e-gov.go.jp/","stats","法律の条文や行政の制度・定義を確認できる。"],
+  rika:["理科自由研究データベース","http://sec-db.cf.ocha.ac.jp/","stats","お茶の水女子大。実験・観察の進め方の実例。"],
+  jssa:["日本学生科学賞","https://event.yomiuri.co.jp/jssa/","stats","高校生の科学研究コンクール。過去の受賞研究がテーマの参考に。"],
+  jsec:["JSEC 高校生・高専生科学技術チャレンジ","https://manabu.asahi.com/jsec/","stats","科学技術の研究コンテスト。過去の研究テーマの参考に。"],
+  seminar:["セミナー・イベント情報","#","portal","チラシのカードをクリックで詳細、ダブルクリックで申込。タグ（理系・文系・ボランティア）で絞り込める。"],
+  form:["セミナー申し込みフォーム","https://docs.google.com/forms/d/e/1FAIpQLSf5H90c4h8S-xgNpoNHImmnqRrRrlHBuKmAIEWKIywGze_Reg/viewform","portal","外部セミナーに申し込んだら、学校にもこのフォームで報告。"],
+  soudan:["総探 相談窓口","https://docs.google.com/forms/d/e/1FAIpQLSd7_x2LAUplR_5Iutvxevq1wSs18tWOZMnG5TAjOZ6h7I0z5g/viewform","portal","困っていることを先生に送れるフォーム。"],
+  deadline:["提出物・締切バナー","#","portal","先生が出した提出物と締切が黄色いバナーに出る。過ぎると自動で消える。"],
+  roadmap:["探究の年間ロードマップ","#","portal","いまの月に対応するフェーズに「今ここ」が付く。"],
+  fav:["★お気に入り","#","portal","よく使うリンクに★を付けて上部の★ボタンで絞り込み。保存はそのブラウザだけ。"]
+};
+
+const PHASES = [
+  {k:"self",label:"自己理解・テーマ探し",m:[4,5]},
+  {k:"ask",label:"問いを立てる・リサーチ",m:[6,7]},
+  {k:"act",label:"実践・アクション",m:[8]},
+  {k:"fb",label:"発表・フィードバック",m:[9]},
+  {k:"deep",label:"研究・修正",m:[10,11]},
+  {k:"mid",label:"中間発表・言語化",m:[12,1]},
+  {k:"fin",label:"最終成果物",m:[2,3]}
+];
+const CATS = [
+  {k:"theme",label:"テーマが決まらない",sub:"仮テーマを作る・広げる"},
+  {k:"question",label:"問いを深めたい",sub:"大きすぎる問いを、調べられる問いに"},
+  {k:"paper",label:"論文・先行研究",sub:"一次情報・学術情報を探す"},
+  {k:"book",label:"本・図書",sub:"見つける・借りる・中身を確かめる"},
+  {k:"news",label:"新聞・ニュース",sub:"世の中の動きを根拠にする"},
+  {k:"data",label:"数字・データ",sub:"「増えている」「多い」を数字で言う"},
+  {k:"field",label:"分野別",sub:"文系・環境・地域のテーマ"},
+  {k:"out",label:"外に出る",sub:"セミナー・イベント・フィールドワーク"},
+  {k:"present",label:"発表・資料づくり",sub:"伝わるスライドとポスター"},
+  {k:"manage",label:"締切・相談",sub:"ポータルの便利機能"}
+];
+
+const QA = [
+ {c:"theme",ph:["self","deep"],q:"興味のあることが特にない。何をテーマにすればいいかわからない。",
+  a:"他の高校生が実際に選んだテーマを眺めて、「これは気になる」「これは違う」を仕分けするところから始めよう。",
+  s:["ポータルの「テーマ例」で実例集を開き、気になったテーマを3つメモする。","3つに共通する言葉（例：食べ物、ことば、まち）を探す。それが自分の興味の軸。","NHK高校講座で「テーマの決め方」の回を見て、その軸を仮テーマの形にする。"],
+  r:["library","junten","nhkk"],
+  t:"<b>コツ</b>：「好き」が見つからないときは「なんで？と思ったこと」「イラッとしたこと」でもテーマになる。"},
+ {c:"theme",ph:["self"],q:"理系の実験っぽいテーマにしたいけど、高校生にできる規模がわからない。",
+  a:"高校生の科学コンクールの過去の研究と、自由研究の事例集を見れば、手の届く規模感がつかめる。",
+  s:["日本学生科学賞・JSECの過去の受賞研究のタイトルを見る。","理科自由研究データベースで、似た実験の手順や必要な道具を確認する。","「学校の理科室でできるか」「何回くり返せるか」で絞る。"],
+  r:["jssa","jsec","rika"],
+  t:"<b>コツ</b>：受賞研究は「身近な疑問×くり返せる実験」のものが多い。"},
+ {c:"theme",ph:["self","deep"],q:"地元（坂戸・埼玉）のことを調べてみたい。",
+  a:"埼玉に特化したポータルと、地域の数字を地図やグラフで見られるツールを組み合わせよう。",
+  s:["学・SAITAMAリサーチデータブックで埼玉の課題や特徴を知る。","RESASで坂戸市の人口・産業・観光の推移を見る。","jSTAT MAPで近くの市町村と比べ、「坂戸だけ違う点」を見つける。","NHK地域づくりアーカイブスで他の地域の取り組みを参考にする。"],
+  r:["gaku","resas","jstat","nhkchiiki"],
+  t:"<b>コツ</b>：近隣市との「違い」が見つかると、それがそのまま問いになる。"},
+
+ {c:"question",ph:["ask","deep"],q:"問いが「環境問題を解決するには？」のように大きすぎて、何を調べればいいかわからない。",
+  a:"先行研究のタイトルと統計の数字を見て、「誰の・どこの・何の」を絞り込もう。",
+  s:["CiNii Researchでテーマのキーワードを検索し、論文タイトルを10本ほど眺める。研究者がどこまで絞っているかがわかる。","e-Statや統計ダッシュボードで関連する数字を見て、気になる変化や差を1つ選ぶ。","6W2H（いつ・どこ・誰が…）で問いを書き直す。例：「坂戸市の家庭ごみはなぜ10年で減ったのか」。"],
+  r:["cinii","dash","rnavi"],
+  t:"<b>目安</b>：その問いに答えるための資料やデータが具体的に思い浮かべば、ちょうどよい大きさ。"},
+ {c:"question",ph:["ask","deep"],q:"自分のテーマに近い研究や資料が見つからない。",
+  a:"キーワードを言い換えるか、連想検索で関連する言葉を見つけよう。",
+  s:["想・IMAGINEやWebcat Plusにテーマを文章で入力し、出てきた関連語をメモする。","その関連語でCiNii Researchをもう一度検索する。","リサーチ・ナビの「調べ方案内」で、分野ごとの調べ方を確認する。"],
+  r:["imagine","webcat","rnavi"],
+  t:"<b>例</b>：「スマホ依存」で見つからなければ「インターネット使用」「青少年 メディア利用」などで。"},
+
+ {c:"paper",ph:["ask","deep"],q:"Googleで調べるとまとめサイトやブログばかり出てくる。",
+  a:"ポータルの「先行研究」にある論文検索から始めよう。書いた人と出典がはっきりした情報にたどり着ける。",
+  s:["CiNii Researchでキーワード検索する。","本文が読めるものはJ-STAGEやIRDBのリンクから開く。","本を探すならNDLサーチで全国の図書館の資料をまとめて調べる。"],
+  r:["cinii","jstage","ndl"],
+  t:"<b>覚えておく</b>：Wikipediaは「入口」としては使えるが、レポートの根拠には使わない。最後の「参考文献」欄から元の資料をたどろう。"},
+ {c:"paper",ph:["ask","deep"],q:"論文を見つけたけど、難しすぎて読めない。",
+  a:"全部読まなくてよい。要旨（最初の数行）と結論だけ読み、読みやすい論文から当たろう。",
+  s:["まず要旨（アブストラクト）と「おわりに」だけ読む。","IRDBで大学の紀要や教育系の論文を探す。比較的読みやすいものが多い。","NHK高校講座などで基礎知識を補ってから戻る。"],
+  r:["irdb","jstage","nhkk"],
+  t:"<b>コツ</b>：わからない言葉は1つずつ調べてメモしておくと、2本目からぐっと読みやすくなる。"},
+ {c:"paper",ph:["deep","mid"],q:"海外ではどうなっているかも知りたい。",
+  a:"Google Scholarなら英語の論文も探せる。日本語のキーワードを英訳して検索しよう。",
+  s:["キーワードを英語にする（例：食品ロス→food waste）。","Google Scholarで検索し、被引用数の多い論文から要旨を読む。","要旨は翻訳ツールで日本語にしてもよい。ただし引用するときは元の論文を示す。"],
+  r:["scholar"],
+  t:"<b>使いどころ</b>：「日本と海外の比較」はレポートの考察を深くする定番の切り口。"},
+
+ {c:"book",ph:["ask","deep"],q:"読みたい本を見つけたけど、どこで借りられるかわからない。",
+  a:"カーリルで、近くの図書館にあるか・いま借りられるかを一度に確認できる。",
+  s:["カーリルで地域（坂戸市など）を設定する。","本のタイトルで検索し、「貸出可」の図書館を確認する。","どこにもなければNDLサーチで所蔵先を調べ、学校図書館の先生に相談する。"],
+  r:["calil","ndl"],
+  t:"<b>コツ</b>：人気の本は予約が必要なことも。発表直前ではなく早めに。"},
+ {c:"book",ph:["ask","deep"],q:"借りたり買ったりする前に、自分のテーマに役立つ本か確かめたい。",
+  a:"Googleブックスなら本文の一部を検索・試し読みできる。",
+  s:["Googleブックスで本のタイトルを検索する。","本文内検索で、自分のキーワードが出てくるページを確認する。","役に立ちそうならカーリルで借りられる場所を探す。"],
+  r:["gbooks","calil"],
+  t:""},
+ {c:"book",ph:["deep"],q:"古い本や絶版の本、昔の資料を読みたい。",
+  a:"国立国会図書館デジタルコレクションで、古い本や雑誌をデジタルで読めることがある。",
+  s:["国立国会図書館デジタルコレクションでタイトルや言葉を検索する。","見つからなければ日本の古本屋で探す。","文学作品なら青空文庫で全文が読めるか確認する。"],
+  r:["ndldc","kosho","aozora"],
+  t:""},
+
+ {c:"news",ph:["ask","deep","mid"],q:"最近のニュースや社会の動きを、レポートの根拠に使いたい。",
+  a:"朝日けんさくくんで新聞記事を検索しよう。日付と新聞名が出典としてはっきり示せる。",
+  s:["ポータルの「新聞記事」欄にあるID・パスワードで朝日けんさくくんにログインする。","キーワードと期間を指定して検索する。","使った記事は「新聞名・日付・見出し」をメモしておく。","使い終わったら必ずログアウトする（同時ログインは100件まで）。"],
+  r:["asahi","newspicks"],
+  t:"<b>注意</b>：ログアウトし忘れると、他の人がログインできなくなる。"},
+ {c:"news",ph:["deep"],q:"昔の出来事が当時どう報道されたか、時代による変化を知りたい。",
+  a:"朝日けんさくくんで期間を区切って検索すると、同じテーマの報道の変化を追える。",
+  s:["同じキーワードで「10年前」「現在」など期間を分けて検索する。","記事の件数や見出しの言葉の違いを比べる。","変化の理由を論文や統計で確かめる。"],
+  r:["asahi","cinii"],
+  t:"<b>使いどころ</b>：記事件数の推移そのものが、社会の関心の変化を示すデータになる。"},
+
+ {c:"data",ph:["deep","mid"],q:"「〜が増えている」「〜が問題だ」と言いたいけど、根拠の数字がない。",
+  a:"国の統計を使おう。まず統計ダッシュボードでグラフを見て、細かい数字はe-Statで探す。",
+  s:["統計ダッシュボードでテーマに関わる指標（人口、雇用、家計など）のグラフを見る。","もっと細かい数字が必要ならe-Statでキーワード検索する。","グラフや表には「出典：〇〇省『〇〇調査』（年）」を必ず書く。"],
+  r:["dash","estat"],
+  t:"<b>コツ</b>：「増えている」と書くなら、何年から何年で何倍になったかまで書けると説得力が上がる。"},
+ {c:"data",ph:["deep","mid"],q:"地域どうしを比べたい。地図やグラフで見せたい。",
+  a:"jSTAT MAPやRESASなら、統計を地図やグラフで表示できる。画面をそのまま発表資料のヒントにできる。",
+  s:["jSTAT MAPで比べたい指標を選び、地図に色分け表示する。","RESASで市町村ごとの人口や産業の推移を見る。","画像を使うときは出典を明記する。"],
+  r:["jstat","resas","dash"],
+  t:""},
+ {c:"data",ph:["act","deep"],q:"気温や雨の量など、天気のデータを使いたい。",
+  a:"気象庁の「過去の気象データ検索」で、地点と年月を選べば実測値が手に入る。",
+  s:["都道府県と地点（例：埼玉県・鳩山）を選ぶ。","年・月を選び、日別や月別の表を表示する。","表計算ソフトに写してグラフにする。"],
+  r:["jma"],
+  t:"<b>例</b>：「猛暑日の日数の変化」「雨の日と売り上げの関係」など。"},
+
+ {c:"field",ph:["ask","deep"],q:"ことば・文学など文系のテーマで、データを使った研究がしたい。",
+  a:"コーパスやデータベースを使えば、言葉の使われ方や伝承を数えて比べられる。",
+  s:["BCCWJの「少納言」（登録不要）で、調べたい言葉の使用例を検索する。","日本語研究の先行研究は『国語学』全文データベースで探す。","民俗・伝承がテーマなら怪異・妖怪伝承データベースで地域ごとに調べる。"],
+  r:["bccwj","kokugo","youkai"],
+  t:"<b>例</b>：「『やばい』はどんな意味で使われてきたか」を使用例の数で比べる。"},
+ {c:"field",ph:["deep","mid"],q:"言葉の正式な定義や、法律・制度がどうなっているかを確かめたい。",
+  a:"e-Govで法律の条文や行政の制度を確認しよう。辞書やネットの説明より正確な根拠になる。",
+  s:["e-Govで法律名やキーワードを検索する。","条文の該当部分を確認し、法律名と条番号をメモする。","制度の背景は論文や新聞記事で補う。"],
+  r:["egov","asahi"],
+  t:""},
+ {c:"field",ph:["self","ask"],q:"SDGsや環境問題をテーマにしたいけど、基礎知識が足りない。",
+  a:"短い動画と教材で全体像をつかんでから、数字や論文で絞り込もう。",
+  s:["NHK for SchoolのSDGs動画で、気になる目標の動画を見る。","JICAの教材で世界の現状を知る。","日本や地域のデータを統計で確認し、身近な問いにする。"],
+  r:["sdgsnhk","jica","nhkl"],
+  t:"<b>注意</b>：「SDGsについて調べる」だけでは問いにならない。目標番号よりも、身近な具体的現象を選ぶ。"},
+
+ {c:"out",ph:["act","fb","deep"],q:"専門家の話を聞いたり、学校の外で活動したりしたい。",
+  a:"ポータルの「セミナー・イベント情報」に、高校生が参加できる講座・コンテスト・ボランティアがまとまっている。",
+  s:["タグ（理系・文系・ボランティアなど）で絞り込む。","カードをクリックしてチラシを見て、ダブルクリックで申込ページへ。","「📅 登録」でGoogleカレンダーに入れる。","申し込んだら「セミナー申し込みフォーム」で学校にも報告する。"],
+  r:["seminar","form"],
+  t:"<b>便利</b>：カードの追跡ボタンで「気になる→申込済→参加済」を記録できる（そのブラウザにだけ保存）。"},
+
+ {c:"present",ph:["fb","mid","fin"],q:"スライドやポスターが「見づらい」「伝わらない」と言われた。",
+  a:"「伝わるデザイン」で文字・配置・色の基本を確認し、配色はAdobe Colorで決めよう。",
+  s:["伝わるデザインで、文字の大きさ・行間・余白のルールを確認する。","Adobe Colorで3色程度の配色を決め、全スライドで統一する。","イラストを使うなら、いらすとやの利用規約を確認してから。"],
+  r:["tsutawaru","color","irasuto"],
+  t:"<b>目安</b>：1枚のスライドに言いたいことは1つ。文字は後ろの席から読める大きさに。"},
+ {c:"present",ph:["mid","fin"],q:"参考文献の書き方がわからない。どこまで調べたら十分？",
+  a:"使った資料は全部、あとから他の人がたどれる形で書く。CiNiiやNDLサーチの書誌情報をそのまま使えば正確になる。",
+  s:["論文はCiNii Research、本はNDLサーチで検索し、著者・タイトル・出版年・掲載誌（出版社）を確認する。","新聞記事は「新聞名・日付・見出し」、統計は「省庁名・調査名・年」を書く。","違う種類の資料（本・論文・新聞・統計）を組み合わせられていれば、根拠として強くなる。"],
+  r:["cinii","ndl","mext"],
+  t:""},
+
+ {c:"manage",ph:["self","ask","act","fb","deep","mid","fin"],q:"提出物の締切を忘れそう。今やるべきことがわからない。",
+  a:"ポータルを開けば、締切は黄色いバナーに、今の時期にやることはロードマップの「今ここ」に出る。",
+  s:["ポータル上部の提出物バナーで締切を確認する。","「🔔 締切のお知らせを受け取る」から通知を設定する。","ロードマップの「今ここ」で、今月のゴールを確認する。"],
+  r:["deadline","roadmap","fav"],
+  t:"<b>注意</b>：★お気に入りやセミナーの追跡状態は、使っている端末のブラウザにだけ保存される。"},
+ {c:"manage",ph:["self","ask","act","fb","deep","mid","fin"],q:"どうしても行き詰まった。誰に相談すればいい？",
+  a:"「総探 相談窓口」フォームで先生に相談できる。何に困っているかを具体的に書こう。",
+  s:["相談窓口フォームを開く。","「何をしようとして」「どこで止まっているか」を書く。","待つ間に、NHK高校講座や文科省の応援団ページで似た悩みのヒントを探す。"],
+  r:["soudan","nhkk","mext"],
+  t:"<b>コツ</b>：「わからない」より「〇〇を調べたが△△が見つからない」と書くと、具体的な助言がもらえる。"}
+];
+
+// ---- render ----
+const nowM = new Date().getMonth()+1;
+const curPhase = (PHASES.find(p=>p.m.includes(nowM))||PHASES[0]).k;
+const curLabel = PHASES.find(p=>p.k===curPhase).label;
+document.getElementById("steps").innerHTML = PHASES.map(p=>
+  `<div class="step${p.k===curPhase?" cur":""}"><b>${p.label}</b><span class="m">${p.m.join("・")}月</span>${p.k===curPhase?"　今ここ":""}</div>`).join("");
+
+let filter = "now", text = "";
+const chipsEl = document.getElementById("chips");
+const chipDefs = [{k:"now",label:`今の時期（${curLabel}）`,now:true},{k:"all",label:"すべて"}].concat(CATS.map(c=>({k:c.k,label:c.label})));
+chipsEl.innerHTML = chipDefs.map(c=>`<button type="button" class="chip${c.now?" now":""}" data-k="${c.k}" aria-pressed="${c.k===filter}">${c.label}</button>`).join("");
+chipsEl.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;filter=b.dataset.k;
+  chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+const qEl=document.getElementById("q"), clr=document.getElementById("clear");
+qEl.addEventListener("input",()=>{text=qEl.value.trim();clr.hidden=!text;if(text&&filter==="now"){filter="all";chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k==="all"));}render();});
+clr.addEventListener("click",()=>{qEl.value="";text="";clr.hidden=true;render();qEl.focus();});
+
+function resHTML(id){const [n,u,w,d]=R[id];const href=u==="#"?P:u;
+  return `<a href="${href}" target="_blank" rel="noopener"><span class="nm">${n}</span><span class="where ${WC[w]}">ポータル：${W[w]}</span><span class="ds">${d}</span></a>`;}
+function hay(x){return (x.q+x.a+x.s.join("")+x.t+x.r.map(id=>R[id][0]+R[id][3]).join("")+CATS.find(c=>c.k===x.c).label).toLowerCase();}
+function render(){
+  const t=text.toLowerCase();
+  const items=QA.filter(x=>(filter==="all"||(filter==="now"?x.ph.includes(curPhase):x.c===filter))&&(!t||hay(x).includes(t)));
+  document.getElementById("count").textContent=`${items.length}件の悩みを表示中（全${QA.length}件）`;
+  const main=document.getElementById("main");
+  if(!items.length){main.innerHTML=`<div class="empty">該当する悩みがありません。言葉を変えるか「すべて」を選んでください。</div>`;return;}
+  main.innerHTML=CATS.filter(c=>items.some(x=>x.c===c.k)).map(c=>`<section class="group"><h2>${c.label}<small>${c.sub}</small></h2><div class="list">${
+    items.filter(x=>x.c===c.k).map(x=>`<details class="q"><summary><span class="qmark">Q</span><span class="qtext">${x.q}<span class="tags">${x.ph.includes(curPhase)&&x.ph.length<7?`<span class="tag now">今の時期</span>`:""}${x.r.slice(0,3).map(id=>`<span class="tag">${R[id][0].replace(/（.*?）/,"")}</span>`).join("")}</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="ans"><p class="short">${x.a}</p><div><h3>やってみる手順</h3><ol>${x.s.map(s=>`<li>${s}</li>`).join("")}</ol></div><div><h3>使うリンク</h3><div class="res">${x.r.map(resHTML).join("")}</div></div>${x.t?`<p class="tip">${x.t}</p>`:""}</div></details>`).join("")}</div></section>`).join("");
+}
+render();
+</script>
+</body>
+</html>
