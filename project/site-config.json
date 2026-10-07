@@ -1,8 +1,8 @@
 {
   "banner": {
     "enabled": true,
-    "text": "夏のセミナー・講演会申し込み受付中！申し込んだらFormに入力を！",
-    "link": "",
+    "text": "探究ログは毎時終わりに必ず入力すること！",
+    "link": "https://script.google.com/a/macros/spec.ed.jp/s/AKfycbyW7zP4zKEqoU5Fq2kb5T9-5BMOrVBpOIccQ_byYIovPJQIg1qjR6S_TKsK0e3Owuk/exec",
     "color": "#189048"
   },
   "sections": [
