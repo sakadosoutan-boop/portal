@@ -344,5 +344,20 @@
     "tags": [
       "理系"
     ]
+  },
+  {
+    "id": "s24",
+    "title": "高大連携共同セミナー「移動から考える世界史探究」",
+    "date": "2026-12-17",
+    "deadline": "2026-12-15",
+    "organizer": "常盤大学高等学校",
+    "target": "高校生・大学生・教員",
+    "format": "online",
+    "applyUrl": "https://forms.gle/9E1pbhg1gWuyhwBQ7",
+    "pdf": "project/seminars/up_1795570301104.jpg",
+    "accent": "#4fb8e8",
+    "tags": [
+      "世界史，高大連携"
+    ]
   }
 ]
